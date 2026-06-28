@@ -29,8 +29,15 @@ async function loadComponent(placeholderId, filePath) {
 }
 
 // Helper to fetch JSON data
+// Checks localStorage first (set by admin panel), falls back to the actual JSON file
 async function fetchJSON(filePath) {
     try {
+        // Build localStorage key from file path: "data/profile.json" → "portfolio_profile"
+        const lsKey = 'portfolio_' + filePath.replace('data/', '').replace('.json', '');
+        const cached = localStorage.getItem(lsKey);
+        if (cached) {
+            return JSON.parse(cached);
+        }
         const response = await fetch(filePath);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();

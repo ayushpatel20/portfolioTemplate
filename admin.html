@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Portfolio CMS</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/plugins/fontawesome-all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --sidebar: #111;
+      --card: #181818;
+      --border: #252525;
+      --accent: #f97316;
+      --accent-hover: #ea6c0a;
+      --text: #e8e8e8;
+      --text-muted: #777;
+      --input-bg: #1e1e1e;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 10px;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    /* ===== LOGIN ===== */
+    #login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: radial-gradient(ellipse at 40% 40%, #1a0f00 0%, #0d0d0d 65%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 48px; width: 100%; max-width: 420px;
+      box-shadow: 0 24px 80px rgba(249,115,22,0.08); text-align: center;
+    }
+    .login-logo {
+      width: 64px; height: 64px; margin: 0 auto 24px;
+      background: linear-gradient(135deg, var(--accent), #c2410c);
+      border-radius: 16px; display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .login-box h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+    .login-input {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 15px; padding: 14px 16px; outline: none; margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: var(--accent); }
+    .login-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; display: none; }
+    .btn-primary {
+      background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      padding: 14px 24px; font-family: 'Inter', sans-serif; font-size: 15px;
+      font-weight: 700; cursor: pointer; width: 100%;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* ===== LAYOUT ===== */
+    #dashboard { display: none; min-height: 100vh; }
+
+    .sidebar {
+      position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+      background: var(--sidebar); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; z-index: 100; overflow-y: auto;
+    }
+    .sidebar-header { padding: 22px 20px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; }
+    .sidebar-logo-icon {
+      width: 38px; height: 38px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), #c2410c);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .sidebar-logo-name { font-size: 14px; font-weight: 700; }
+    .sidebar-logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .sidebar-nav { padding: 12px; flex: 1; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); padding: 14px 8px 6px; font-weight: 600; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: 8px; cursor: pointer; color: var(--text-muted); font-size: 13.5px;
+      font-weight: 500; transition: all 0.18s; margin-bottom: 2px; text-decoration: none;
+      border: none; background: transparent; width: 100%; font-family: 'Inter', sans-serif;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(249,115,22,0.12); color: var(--accent); font-weight: 600; }
+    .nav-item i { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+    .sidebar-footer { padding: 14px; border-top: 1px solid var(--border); }
+    .btn-logout {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      background: transparent; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-muted); font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 10px 14px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    .main-content { margin-left: 240px; min-height: 100vh; }
+    .topbar {
+      background: var(--sidebar); border-bottom: 1px solid var(--border);
+      padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-size: 17px; font-weight: 800; }
+    .topbar-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-secondary {
+      background: transparent; border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 9px 16px; font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px; text-decoration: none;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .content-body { padding: 28px 32px 100px; }
+
+    /* ===== SECTIONS ===== */
+    .section-page { display: none; }
+    .section-page.active { display: block; }
+
+    /* ===== CARDS ===== */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .card-title i { color: var(--accent); }
+
+    /* ===== FORMS ===== */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 7px; }
+    .form-control {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 14px; padding: 11px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-control:focus { border-color: var(--accent); }
+    .form-control::placeholder { color: #3a3a3a; }
+    textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
+    select.form-control {
+      appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23777' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    select.form-control option { background: #222; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+    /* ===== ITEM LIST ===== */
+    .items-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .items-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .items-title i { color: var(--accent); }
+    .btn-add {
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3);
+      color: var(--accent); border-radius: 8px; padding: 9px 16px;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-add:hover { background: rgba(249,115,22,0.2); border-color: var(--accent); }
+    .item-card {
+      background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 18px; margin-bottom: 8px; display: flex; align-items: center;
+      justify-content: space-between; gap: 14px; transition: border-color 0.2s;
+    }
+    .item-card:hover { border-color: #333; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-icon {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 12px; transition: all 0.2s;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-icon.del:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ===== SOCIAL LINKS ===== */
+    .social-row {
+      display: grid; grid-template-columns: 130px 1fr 1fr auto;
+      gap: 10px; align-items: center; margin-bottom: 10px;
+    }
+
+    /* ===== GALLERY ===== */
+    .gallery-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .gallery-row input { flex: 1; }
+
+    /* ===== TAGS ===== */
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; }
+    .tag-pill {
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25);
+      color: var(--accent); border-radius: 6px; padding: 5px 10px; font-size: 12px;
+      font-weight: 500; display: flex; align-items: center; gap: 7px;
+    }
+    .tag-x { cursor: pointer; opacity: 0.7; font-size: 11px; }
+    .tag-x:hover { opacity: 1; }
+    .tag-input-row { display: flex; gap: 8px; }
+    .tag-input-row input { flex: 1; }
+
+    /* ===== SAVE BUTTON ===== */
+    .save-btn-wrap { margin-top: 8px; }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state i { font-size: 36px; opacity: 0.25; display: block; margin-bottom: 14px; }
+    .empty-state p { font-size: 13px; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(5px); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      width: 100%; max-width: 660px; max-height: 88vh; overflow-y: auto;
+      transform: scale(0.95) translateY(10px); transition: transform 0.25s;
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-header {
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top: 0; background: var(--card); z-index: 1;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; }
+    .modal-close {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+      border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 15px; transition: all 0.2s;
+    }
+    .modal-close:hover { border-color: var(--danger); color: var(--danger); }
+    .modal-body { padding: 24px; }
+    .modal-footer {
+      padding: 16px 24px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 10px;
+      position: sticky; bottom: 0; background: var(--card);
+    }
+
+    /* ===== TOAST ===== */
+    .toast-wrap { position: fixed; top: 18px; right: 18px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 13px 18px; display: flex; align-items: center; gap: 12px;
+      min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease;
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.info { border-left: 3px solid var(--accent); }
+    .toast i { font-size: 15px; }
+    .toast.success i { color: var(--success); }
+    .toast.error i { color: var(--danger); }
+    .toast.info i { color: var(--accent); }
+    .toast span { font-size: 13.5px; font-weight: 500; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 3px; }
+
+    @media (max-width: 860px) {
+      .sidebar { width: 58px; }
+      .sidebar-logo-name, .sidebar-logo-sub, .nav-item span, .nav-section, .btn-logout span { display: none; }
+      .main-content { margin-left: 58px; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .social-row { grid-template-columns: 1fr auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- =========================================================
+     LOGIN SCREEN
+========================================================= -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🛡️</div>
+    <h2>Portfolio Admin</h2>
+    <p>Sign in to manage your portfolio content</p>
+    <input type="password" class="login-input" id="login-pwd" placeholder="Enter admin password" autocomplete="current-password">
+    <div class="login-error" id="login-err">Incorrect password. Please try again.</div>
+    <button class="btn-primary" onclick="doLogin()">
+      <i class="fas fa-sign-in-alt"></i> Sign In
+    </button>
+  </div>
+</div>
+
+<!-- =========================================================
+     DASHBOARD
+========================================================= -->
+<div id="dashboard">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">⚡</div>
+        <div>
+          <div class="sidebar-logo-name">Portfolio CMS</div>
+          <div class="sidebar-logo-sub">Admin Panel</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Content</div>
+      <button class="nav-item active" id="nav-profile" onclick="goTo('profile',this)"><i class="fas fa-user-circle"></i><span>Profile</span></button>
+      <button class="nav-item" id="nav-about" onclick="goTo('about',this)"><i class="fas fa-rocket"></i><span>Hero &amp; About</span></button>
+      <button class="nav-item" id="nav-services" onclick="goTo('services',this)"><i class="fas fa-cogs"></i><span>Services</span></button>
+      <button class="nav-item" id="nav-projects" onclick="goTo('projects',this)"><i class="fas fa-briefcase"></i><span>Projects</span></button>
+      <button class="nav-item" id="nav-blogs" onclick="goTo('blogs',this)"><i class="fas fa-pen-nib"></i><span>Blogs</span></button>
+      <button class="nav-item" id="nav-team" onclick="goTo('team',this)"><i class="fas fa-users"></i><span>Team</span></button>
+      <button class="nav-item" id="nav-testimonials" onclick="goTo('testimonials',this)"><i class="fas fa-quote-right"></i><span>Testimonials</span></button>
+      <div class="nav-section">Tools</div>
+      <a class="nav-item" href="index.html" target="_blank"><i class="fas fa-eye"></i><span>Preview Site</span></a>
+      <button class="nav-item" onclick="exportJSON()"><i class="fas fa-download"></i><span>Export JSON</span></button>
+      <button class="nav-item" onclick="resetDefaults()"><i class="fas fa-undo-alt"></i><span>Reset Defaults</span></button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">
+        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Profile & Contact</div>
+        <div class="topbar-sub" id="topbar-sub">Manage your site identity and contact details</div>
+      </div>
+      <div class="topbar-actions">
+        <a class="btn-secondary" href="index.html" target="_blank"><i class="fas fa-external-link-alt"></i> Preview</a>
+        <button class="btn-secondary" onclick="exportJSON()"><i class="fas fa-download"></i> Export JSON</button>
+      </div>
+    </div>
+
+    <div class="content-body">
+
+      <!-- ======= PROFILE ======= -->
+      <div class="section-page active" id="sec-profile">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-id-card"></i> Site Identity</div>
+          <div class="form-group">
+            <label class="form-label">Site / Agency Name</label>
+            <input type="text" class="form-control" id="p-siteName" placeholder="e.g. Uifolio">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-map-marker-alt"></i> Contact Information</div>
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" id="p-address" placeholder="49 Brimmer St, Boston, MA">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="p-email" placeholder="hello@example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="text" class="form-control" id="p-phone" placeholder="+1 234 567 8900">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-share-alt"></i> Social Media Links</div>
+          <div id="social-container"></div>
+          <button class="btn-add" onclick="addSocial()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Social Link</button>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="saveProfile()" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Profile</button>
+        </div>
+      </div>
+
+      <!-- ======= ABOUT ======= -->
+      <div class="section-page" id="sec-about">
+        <div class="card">
+          <div class="card-title"><i class="fas fa-heading"></i> Hero Section</div>
+          <div class="form-group">
+            <label class="form-label">Main Title</label>
+            <input type="text" class="form-control" id="a-title" placeholder="e.g. Digital Startup">
+          </div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">Tag 1</label>
+              <input type="text" class="form-control" id="a-tag1" placeholder="Digital Marketing">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tag 2</label>
+              <input type="text" class="form-control" id="a-tag2" placeholder="Creative startup">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tag 3</label>
+              <input type="text" class="form-control" id="a-tag3" placeholder="7x Award winning">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hero Description</label>
+            <textarea class="form-control" id="a-heroDesc"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Background Image URL</label>
+            <input type="text" class="form-control" id="a-heroBg" placeholder="assets/imgs/pattern-bg.webp">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-trophy"></i> Experience Stats</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Count (e.g. 22k)</label>
+              <input type="text" class="form-control" id="a-expCount" placeholder="22k">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Suffix</label>
+              <input type="text" class="form-control" id="a-expSuffix" placeholder="+">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Supporting Text</label>
+            <input type="text" class="form-control" id="a-expText" placeholder="Support peoples from all over the world">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="fas fa-align-left"></i> Intro / About Section</div>
+          <div class="form-group">
+            <label class="form-label">Intro Title</label>
+            <textarea class="form-control" id="a-introTitle" rows="2" placeholder="We help business elevate..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Highlighted / Italic Text</label>
+            <input type="text" class="form-control" id="a-introHL" placeholder="software development, product design, QA">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Intro Description Paragraph</label>
+            <textarea class="form-control" id="a-introDesc"></textarea>
+          </div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="saveAbout()" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save About</button>
+        </div>
+      </div>
+
+      <!-- ======= SERVICES ======= -->
+      <div class="section-page" id="sec-services">
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-th"></i> General Services (Grid Cards)</div>
+            <button class="btn-add" onclick="openModal('gserv')"><i class="fas fa-plus"></i> Add</button>
+          </div>
+          <div id="gserv-list"></div>
+        </div>
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-list-alt"></i> Featured Services (Accordion)</div>
+            <button class="btn-add" onclick="openModal('fserv')"><i class="fas fa-plus"></i> Add</button>
+          </div>
+          <div id="fserv-list"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="saveServices()" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Services</button>
+        </div>
+      </div>
+
+      <!-- ======= PROJECTS ======= -->
+      <div class="section-page" id="sec-projects">
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-folder-open"></i> Portfolio Projects</div>
+            <button class="btn-add" onclick="openModal('project')"><i class="fas fa-plus"></i> Add Project</button>
+          </div>
+          <div id="projects-list"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="persistKey('projects')" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Projects</button>
+        </div>
+      </div>
+
+      <!-- ======= BLOGS ======= -->
+      <div class="section-page" id="sec-blogs">
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-newspaper"></i> Blog Posts</div>
+            <button class="btn-add" onclick="openModal('blog')"><i class="fas fa-plus"></i> Add Post</button>
+          </div>
+          <div id="blogs-list"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="persistKey('blogs')" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Blogs</button>
+        </div>
+      </div>
+
+      <!-- ======= TEAM ======= -->
+      <div class="section-page" id="sec-team">
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-user-friends"></i> Team Members</div>
+            <button class="btn-add" onclick="openModal('team')"><i class="fas fa-plus"></i> Add Member</button>
+          </div>
+          <div id="team-list"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="persistKey('team')" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Team</button>
+        </div>
+      </div>
+
+      <!-- ======= TESTIMONIALS ======= -->
+      <div class="section-page" id="sec-testimonials">
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-comments"></i> Client Testimonials</div>
+            <button class="btn-add" onclick="openModal('testimonial')"><i class="fas fa-plus"></i> Add Testimonial</button>
+          </div>
+          <div id="testimonials-list"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-primary" onclick="persistKey('testimonials')" style="width:auto;padding:13px 28px"><i class="fas fa-save"></i> Save Testimonials</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     MODAL
+========================================================= -->
+<div class="modal-overlay" id="modal-overlay" onclick="overlayClose(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Add Item</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="modalConfirm()" style="width:auto;padding:11px 24px"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  CONFIG  — change the password here
+// ================================================================
+const ADMIN_PASS = 'admin123';
+
+// ================================================================
+//  STATE
+// ================================================================
+const DATA = { profile: null, about: null, services: null, projects: null, blogs: null, team: null, testimonials: null };
+const LS  = { profile: 'portfolio_profile', about: 'portfolio_about', services: 'portfolio_services', projects: 'portfolio_projects', blogs: 'portfolio_blogs', team: 'portfolio_team', testimonials: 'portfolio_testimonials' };
+const SRC = { profile: 'data/profile.json', about: 'data/about.json', services: 'data/services.json', projects: 'data/projects.json', blogs: 'data/blogs.json', team: 'data/team.json', testimonials: 'data/testimonials.json' };
+
+let _modalType = null, _editIdx = -1, _tags = [], _gallery = [];
+
+// ================================================================
+//  LOGIN
+// ================================================================
+document.getElementById('login-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogin() {
+  const v = document.getElementById('login-pwd').value;
+  if (v === ADMIN_PASS) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('login-err').style.display = 'none';
+    loadAll();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pwd').value = '';
+  }
+}
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-pwd').value = '';
+}
+
+// ================================================================
+//  DATA LOADING
+// ================================================================
+async function loadAll() {
+  for (const k of Object.keys(LS)) {
+    const cached = localStorage.getItem(LS[k]);
+    if (cached) { DATA[k] = JSON.parse(cached); continue; }
+    try { const r = await fetch(SRC[k]); DATA[k] = await r.json(); }
+    catch { DATA[k] = defaultFor(k); }
+  }
+  renderAll();
+  toast('Portfolio data loaded!', 'success');
+}
+
+function defaultFor(k) {
+  return {
+    profile: { siteName:'', contact:{ address:'', email:'', phone:'' }, socialLinks:[] },
+    about: { hero:{ title:'', tag1:'', tag2:'', tag3:'', description:'', bgImage:'' }, experience:{ count:'', suffix:'+', text:'' }, intro:{ title:'', highlightedText:'', description:'' } },
+    services: { generalServices:[], featuredServices:[] },
+    projects:[], blogs:[], team:[], testimonials:[]
+  }[k] || {};
+}
+
+// ================================================================
+//  NAVIGATION
+// ================================================================
+const secMeta = {
+  profile:      { title:'Profile & Contact',    sub:'Manage site name, address and social links' },
+  about:        { title:'Hero & About',          sub:'Edit hero banner, tags and intro text' },
+  services:     { title:'Services',              sub:'Grid cards and featured accordion services' },
+  projects:     { title:'Projects',              sub:'Add, edit or remove portfolio projects' },
+  blogs:        { title:'Blog Posts',            sub:'Manage your journal / news articles' },
+  team:         { title:'Team Members',          sub:'Showcase your team' },
+  testimonials: { title:'Testimonials',          sub:'Client reviews and star ratings' }
+};
+function goTo(name, btn) {
+  document.querySelectorAll('.section-page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`sec-${name}`).classList.add('active');
+  btn.classList.add('active');
+  const m = secMeta[name];
+  if (m) { document.getElementById('topbar-title').textContent = m.title; document.getElementById('topbar-sub').textContent = m.sub; }
+}
+
+// ================================================================
+//  RENDER ALL
+// ================================================================
+function renderAll() {
+  renderProfile(); renderAbout(); renderServices();
+  renderItemList('projects',     renderProjectCard);
+  renderItemList('blogs',        renderBlogCard);
+  renderItemList('team',         renderTeamCard);
+  renderItemList('testimonials', renderTestimonialCard);
+}
+
+// --- Profile ---
+function renderProfile() {
+  const p = DATA.profile || {};
+  val('p-siteName', p.siteName);
+  val('p-address',  p.contact?.address);
+  val('p-email',    p.contact?.email);
+  val('p-phone',    p.contact?.phone);
+  renderSocials();
+}
+function renderSocials() {
+  const links = DATA.profile?.socialLinks || [];
+  const c = document.getElementById('social-container');
+  if (!links.length) { c.innerHTML = '<p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">No social links yet.</p>'; return; }
+  c.innerHTML = `
+    <div style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;padding:0 2px">
+      <span class="form-label" style="margin:0">Platform</span>
+      <span class="form-label" style="margin:0">URL</span>
+      <span class="form-label" style="margin:0">Icon Class</span>
+      <span></span>
+    </div>` +
+    links.map((l, i) => `
+    <div class="social-row">
+      <input class="form-control" placeholder="e.g. twitter" value="${esc(l.platform)}" onchange="DATA.profile.socialLinks[${i}].platform=this.value">
+      <input class="form-control" placeholder="https://..." value="${esc(l.url)}" onchange="DATA.profile.socialLinks[${i}].url=this.value">
+      <input class="form-control" placeholder="fab fa-twitter" value="${esc(l.iconClass)}" onchange="DATA.profile.socialLinks[${i}].iconClass=this.value">
+      <button class="btn-icon del" onclick="removeSocial(${i})" title="Remove"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+}
+function addSocial() { if (!DATA.profile.socialLinks) DATA.profile.socialLinks = []; DATA.profile.socialLinks.push({ platform:'', url:'#', iconClass:'' }); renderSocials(); }
+function removeSocial(i) { DATA.profile.socialLinks.splice(i, 1); renderSocials(); }
+function saveProfile() {
+  DATA.profile.siteName = g('p-siteName');
+  DATA.profile.contact = { address: g('p-address'), email: g('p-email'), phone: g('p-phone') };
+  persistKey('profile');
+}
+
+// --- About ---
+function renderAbout() {
+  const a = DATA.about || {};
+  val('a-title',    a.hero?.title);
+  val('a-tag1',     a.hero?.tag1);
+  val('a-tag2',     a.hero?.tag2);
+  val('a-tag3',     a.hero?.tag3);
+  val('a-heroDesc', a.hero?.description);
+  val('a-heroBg',   a.hero?.bgImage);
+  val('a-expCount', a.experience?.count);
+  val('a-expSuffix',a.experience?.suffix);
+  val('a-expText',  a.experience?.text);
+  val('a-introTitle',a.intro?.title);
+  val('a-introHL',  a.intro?.highlightedText);
+  val('a-introDesc',a.intro?.description);
+}
+function saveAbout() {
+  DATA.about = {
+    hero: { title:g('a-title'), tag1:g('a-tag1'), tag2:g('a-tag2'), tag3:g('a-tag3'), description:g('a-heroDesc'), bgImage:g('a-heroBg') },
+    experience: { count:g('a-expCount'), suffix:g('a-expSuffix'), text:g('a-expText') },
+    intro: { title:g('a-introTitle'), highlightedText:g('a-introHL'), description:g('a-introDesc') }
+  };
+  persistKey('about');
+}
+
+// --- Services ---
+function renderServices() {
+  const s = DATA.services || { generalServices:[], featuredServices:[] };
+  const gl = document.getElementById('gserv-list');
+  const fl = document.getElementById('fserv-list');
+  gl.innerHTML = !s.generalServices?.length ? emptyState('th') : s.generalServices.map((x,i) => `
+    <div class="item-card">
+      <div class="item-info">
+        <div class="item-name">${stripHtml(x.title||'Untitled')}</div>
+        <div class="item-meta">${x.description?.substring(0,60)||''}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-icon" onclick="openModal('gserv',${i})" title="Edit"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon del" onclick="delItem('gserv',${i})" title="Delete"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+  fl.innerHTML = !s.featuredServices?.length ? emptyState('list-alt') : s.featuredServices.map((x,i) => `
+    <div class="item-card">
+      <div class="item-info">
+        <div class="item-name">${x.num||''} — ${x.title||'Untitled'}</div>
+        <div class="item-meta">${(x.tags||[]).join(', ')}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-icon" onclick="openModal('fserv',${i})" title="Edit"><i class="fas fa-pen"></i></button>
+        <button class="btn-icon del" onclick="delItem('fserv',${i})" title="Delete"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+function saveServices() { persistKey('services'); }
+
+// --- Generic item list ---
+function renderItemList(key, cardFn) {
+  const el = document.getElementById(`${key}-list`);
+  const data = DATA[key];
+  el.innerHTML = !data?.length ? emptyState('inbox') : data.map((d,i) => cardFn(d,i)).join('');
+}
+function renderProjectCard(p,i) { return itemCard(p.title, `${p.category||''}${p.client?' · '+p.client:''}`, `openModal('project',${i})`, `delItem('project',${i})`); }
+function renderBlogCard(b,i)    { return itemCard(b.title, `${b.category||''}${b.author?' · '+b.author:''}${b.date?' · '+b.date:''}`, `openModal('blog',${i})`, `delItem('blog',${i})`); }
+function renderTeamCard(m,i)    { return itemCard(m.name, m.role||'', `openModal('team',${i})`, `delItem('team',${i})`); }
+function renderTestimonialCard(t,i) { return itemCard(t.author||'Anonymous', `${t.role||''} · "${(t.quote||'').substring(0,45)}..."`, `openModal('testimonial',${i})`, `delItem('testimonial',${i})`); }
+function itemCard(name, meta, editFn, delFn) {
+  return `<div class="item-card">
+    <div class="item-info"><div class="item-name">${esc(name)||'Untitled'}</div><div class="item-meta">${esc(meta)}</div></div>
+    <div class="item-actions">
+      <button class="btn-icon" onclick="${editFn}" title="Edit"><i class="fas fa-pen"></i></button>
+      <button class="btn-icon del" onclick="${delFn}" title="Delete"><i class="fas fa-trash"></i></button>
+    </div></div>`;
+}
+
+// ================================================================
+//  PERSIST
+// ================================================================
+function persistKey(key) {
+  localStorage.setItem(LS[key], JSON.stringify(DATA[key]));
+  toast(`${key.charAt(0).toUpperCase()+key.slice(1)} saved! ✓`, 'success');
+}
+
+// ================================================================
+//  DELETE
+// ================================================================
+function delItem(type, i) {
+  if (!confirm('Delete this item?')) return;
+  if (type === 'gserv')  { DATA.services.generalServices.splice(i,1); renderServices(); saveServices(); }
+  else if (type === 'fserv')  { DATA.services.featuredServices.splice(i,1); renderServices(); saveServices(); }
+  else if (type === 'project') { DATA.projects.splice(i,1); renderItemList('projects',renderProjectCard); persistKey('projects'); }
+  else if (type === 'blog')    { DATA.blogs.splice(i,1); renderItemList('blogs',renderBlogCard); persistKey('blogs'); }
+  else if (type === 'team')    { DATA.team.splice(i,1); renderItemList('team',renderTeamCard); persistKey('team'); }
+  else if (type === 'testimonial') { DATA.testimonials.splice(i,1); renderItemList('testimonials',renderTestimonialCard); persistKey('testimonials'); }
+  toast('Deleted', 'info');
+}
+
+// ================================================================
+//  MODAL
+// ================================================================
+function openModal(type, idx = -1) {
+  _modalType = type; _editIdx = idx; _tags = []; _gallery = [];
+  const isEdit = idx >= 0;
+  const item = isEdit ? getItem(type, idx) : null;
+  const names = { gserv:'General Service', fserv:'Featured Service', project:'Project', blog:'Blog Post', team:'Team Member', testimonial:'Testimonial' };
+  document.getElementById('modal-title').textContent = (isEdit ? 'Edit ' : 'Add ') + (names[type]||type);
+  document.getElementById('modal-body').innerHTML = modalForm(type, item);
+  if (type === 'fserv') { _tags = [...(item?.tags||[])]; drawTags(); }
+  if (type === 'project') { _gallery = [...(item?.gallery?.length ? item.gallery : [''])]; drawGallery(); }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function getItem(type, i) {
+  if (type === 'gserv') return DATA.services.generalServices[i];
+  if (type === 'fserv') return DATA.services.featuredServices[i];
+  if (type === 'project') return DATA.projects[i];
+  if (type === 'blog') return DATA.blogs[i];
+  if (type === 'team') return DATA.team[i];
+  if (type === 'testimonial') return DATA.testimonials[i];
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function overlayClose(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+function modalForm(type, item) {
+  const v = (f, d='') => esc(item ? (item[f]??d) : d);
+  if (type === 'gserv') return `
+    <div class="form-group"><label class="form-label">Service Title</label>
+      <input class="form-control" id="m-title" placeholder="Web Development" value="${v('title')}">
+      <p class="form-hint">Tip: use &lt;br&gt; in title for a line break</p></div>
+    <div class="form-group"><label class="form-label">Icon Image URL</label>
+      <input class="form-control" id="m-icon" placeholder="assets/imgs/serv/1.svg" value="${v('icon')}"></div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-control" id="m-desc">${v('description')}</textarea></div>`;
+
+  if (type === 'fserv') return `
+    <div class="form-group"><label class="form-label">Title</label>
+      <input class="form-control" id="m-title" placeholder="Digital Marketing" value="${v('title')}"></div>
+    <div class="form-group"><label class="form-label">Background Image URL</label>
+      <input class="form-control" id="m-bg" placeholder="assets/imgs/serv/1.webp" value="${v('bgImage')}"></div>
+    <div class="form-group"><label class="form-label">Tags</label>
+      <div class="tags-wrap" id="tags-wrap"></div>
+      <div class="tag-input-row">
+        <input class="form-control" id="m-tag-in" placeholder="Type a tag and press Enter or +">
+        <button class="btn-add" type="button" onclick="addTag()"><i class="fas fa-plus"></i></button>
+      </div></div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-control" id="m-desc">${v('description')}</textarea></div>`;
+
+  if (type === 'project') return `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Project Title</label>
+        <input class="form-control" id="m-title" value="${v('title')}"></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <input class="form-control" id="m-cat" placeholder="Branding" value="${v('category')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client</label>
+        <input class="form-control" id="m-client" value="${v('client')}"></div>
+      <div class="form-group"><label class="form-label">Date</label>
+        <input class="form-control" id="m-date" placeholder="20 Aug 2025" value="${v('date')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Service Type</label>
+        <input class="form-control" id="m-service" placeholder="Photography" value="${v('service')}"></div>
+      <div class="form-group"><label class="form-label">Cover Image URL</label>
+        <input class="form-control" id="m-bg" placeholder="assets/imgs/works/1.webp" value="${v('bgImage')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <textarea class="form-control" id="m-desc">${v('description')}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Live URL</label>
+        <input class="form-control" id="m-live" placeholder="https://..." value="${v('liveUrl','#')}"></div>
+      <div class="form-group"><label class="form-label">GitHub URL</label>
+        <input class="form-control" id="m-git" placeholder="https://github.com/..." value="${v('githubUrl','#')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Gallery Images (one URL per row)</label>
+      <div id="gallery-wrap"></div>
+      <button class="btn-add" type="button" onclick="addGalleryRow()" style="margin-top:8px"><i class="fas fa-plus"></i> Add Image</button>
+    </div>`;
+
+  if (type === 'blog') return `
+    <div class="form-group"><label class="form-label">Title</label>
+      <input class="form-control" id="m-title" value="${v('title')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Category</label>
+        <input class="form-control" id="m-cat" placeholder="Design" value="${v('category')}"></div>
+      <div class="form-group"><label class="form-label">Author</label>
+        <input class="form-control" id="m-author" value="${v('author')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label>
+        <input class="form-control" id="m-date" placeholder="25 Aug 2025" value="${v('date')}"></div>
+      <div class="form-group"><label class="form-label">Cover Image URL</label>
+        <input class="form-control" id="m-img" placeholder="assets/imgs/blog/1.webp" value="${v('image')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Content</label>
+      <textarea class="form-control" id="m-content" rows="6">${v('content')}</textarea></div>`;
+
+  if (type === 'team') return `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Full Name</label>
+        <input class="form-control" id="m-name" value="${v('name')}"></div>
+      <div class="form-group"><label class="form-label">Role / Title</label>
+        <input class="form-control" id="m-role" placeholder="Lead Designer" value="${v('role')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Photo URL</label>
+      <input class="form-control" id="m-img" placeholder="assets/imgs/team/1.jpg" value="${v('image')}"></div>`;
+
+  if (type === 'testimonial') return `
+    <div class="form-group"><label class="form-label">Review / Quote</label>
+      <textarea class="form-control" id="m-quote" rows="4">${v('quote')}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Author Name</label>
+        <input class="form-control" id="m-author" value="${v('author')}"></div>
+      <div class="form-group"><label class="form-label">Role / Company</label>
+        <input class="form-control" id="m-role" placeholder="CEO at Startup" value="${v('role')}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Avatar Photo URL</label>
+      <input class="form-control" id="m-avatar" placeholder="assets/imgs/testim/1.jpg" value="${v('avatar')}"></div>
+    <div class="form-group"><label class="form-label">Background Style</label>
+      <select class="form-control" id="m-bgcls">
+        <option value="" ${!item?.bgClass?'selected':''}>Dark (default)</option>
+        <option value="bg-light" ${item?.bgClass==='bg-light'?'selected':''}>Light</option>
+        <option value="bg-main-color" ${item?.bgClass==='bg-main-color'?'selected':''}>Accent Color</option>
+      </select></div>`;
+
+  return '<p>Unknown type</p>';
+}
+
+// Tags for fserv
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement?.id === 'm-tag-in') { e.preventDefault(); addTag(); }
+});
+function addTag() {
+  const el = document.getElementById('m-tag-in');
+  const t = (el?.value||'').trim();
+  if (t && !_tags.includes(t)) { _tags.push(t); drawTags(); }
+  if (el) el.value = '';
+  el?.focus();
+}
+function removeTag(i) { _tags.splice(i,1); drawTags(); }
+function drawTags() {
+  const w = document.getElementById('tags-wrap'); if (!w) return;
+  w.innerHTML = _tags.map((t,i) => `<div class="tag-pill">${esc(t)} <span class="tag-x" onclick="removeTag(${i})">✕</span></div>`).join('');
+}
+
+// Gallery for project
+function addGalleryRow(val='') { _gallery.push(val); drawGallery(); }
+function removeGalleryRow(i) { _gallery.splice(i,1); drawGallery(); }
+function drawGallery() {
+  const w = document.getElementById('gallery-wrap'); if (!w) return;
+  w.innerHTML = _gallery.map((img,i) => `
+    <div class="gallery-row">
+      <input class="form-control" placeholder="Image URL" value="${esc(img)}" oninput="_gallery[${i}]=this.value">
+      <button class="btn-icon del" onclick="removeGalleryRow(${i})" type="button"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+}
+
+// Confirm modal save
+function modalConfirm() {
+  const r = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const t = _modalType, i = _editIdx, isEdit = i >= 0;
+
+  let obj = null;
+  if (t === 'gserv') obj = { title:r('m-title'), icon:r('m-icon'), description:r('m-desc') };
+  else if (t === 'fserv') {
+    const base = isEdit ? DATA.services.featuredServices[i] : {};
+    const cnt = DATA.services.featuredServices.length;
+    obj = { id: base.id||String(cnt+1), num: base.num||String(cnt+1).padStart(2,'0'), title:r('m-title'), bgImage:r('m-bg'), tags:[..._tags], description:r('m-desc') };
+  }
+  else if (t === 'project') {
+    const base = isEdit ? DATA.projects[i] : {};
+    obj = { id:base.id||String(DATA.projects.length+1), title:r('m-title'), category:r('m-cat'), client:r('m-client'), date:r('m-date'), service:r('m-service'), bgImage:r('m-bg'), description:r('m-desc'), liveUrl:r('m-live')||'#', githubUrl:r('m-git')||'#', gallery:_gallery.filter(x=>x.trim()) };
+  }
+  else if (t === 'blog') {
+    const base = isEdit ? DATA.blogs[i] : {};
+    obj = { id:base.id||String(DATA.blogs.length+1), title:r('m-title'), category:r('m-cat'), author:r('m-author'), date:r('m-date'), image:r('m-img'), content:r('m-content') };
+  }
+  else if (t === 'team') {
+    const base = isEdit ? DATA.team[i] : {};
+    obj = { ...base, name:r('m-name'), role:r('m-role'), image:r('m-img'), columnClass: base.columnClass||'col-lg-3 col-md-6', itemClass: base.itemClass||'item', heightClass: base.heightClass||'h-350px' };
+  }
+  else if (t === 'testimonial') {
+    const bgCls = document.getElementById('m-bgcls')?.value || '';
+    obj = { quote:r('m-quote'), author:r('m-author'), role:r('m-role'), avatar:r('m-avatar'), bgClass:bgCls };
+  }
+
+  if (!obj) return;
+
+  // Commit
+  if (t === 'gserv')  { isEdit ? DATA.services.generalServices.splice(i,1,obj) : DATA.services.generalServices.push(obj); renderServices(); saveServices(); }
+  else if (t === 'fserv') { isEdit ? DATA.services.featuredServices.splice(i,1,obj) : DATA.services.featuredServices.push(obj); renderServices(); saveServices(); }
+  else if (t === 'project') { isEdit ? DATA.projects.splice(i,1,obj) : DATA.projects.push(obj); renderItemList('projects',renderProjectCard); persistKey('projects'); }
+  else if (t === 'blog')    { isEdit ? DATA.blogs.splice(i,1,obj) : DATA.blogs.push(obj); renderItemList('blogs',renderBlogCard); persistKey('blogs'); }
+  else if (t === 'team')    { isEdit ? DATA.team.splice(i,1,obj) : DATA.team.push(obj); renderItemList('team',renderTeamCard); persistKey('team'); }
+  else if (t === 'testimonial') { isEdit ? DATA.testimonials.splice(i,1,obj) : DATA.testimonials.push(obj); renderItemList('testimonials',renderTestimonialCard); persistKey('testimonials'); }
+
+  closeModal();
+  toast('Saved successfully!', 'success');
+}
+
+// ================================================================
+//  EXPORT JSON
+// ================================================================
+function exportJSON() {
+  const files = { 'profile.json':DATA.profile, 'about.json':DATA.about, 'services.json':DATA.services, 'projects.json':DATA.projects, 'blogs.json':DATA.blogs, 'team.json':DATA.team, 'testimonials.json':DATA.testimonials };
+  for (const [name, data] of Object.entries(files)) {
+    if (!data) continue;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const a = Object.assign(document.createElement('a'), { href:URL.createObjectURL(blob), download:name });
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+  toast('7 JSON files exported! Replace files in data/ folder & redeploy to Vercel.', 'success');
+}
+
+// ================================================================
+//  RESET
+// ================================================================
+async function resetDefaults() {
+  if (!confirm('This clears all saved changes and reloads original JSON files. Continue?')) return;
+  Object.values(LS).forEach(k => localStorage.removeItem(k));
+  await loadAll();
+  toast('Reset to original defaults', 'info');
+}
+
+// ================================================================
+//  TOAST
+// ================================================================
+function toast(msg, type='info') {
+  const icons = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-info-circle' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => { el.style.transition='opacity .35s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 3500);
+}
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function g(id) { const el=document.getElementById(id); return el?el.value.trim():''; }
+function val(id, v) { const el=document.getElementById(id); if(el) el.value = v||''; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function stripHtml(s) { return String(s||'').replace(/<[^>]*>/g,' ').trim(); }
+function emptyState(icon) { return `<div class="empty-state"><i class="fas fa-${icon}"></i><p>Nothing here yet. Click "Add" to get started.</p></div>`; }
+</script>
+</body>
+</html>
