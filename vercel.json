@@ -1,32 +1,4 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    { "src": "/admin", "dest": "/admin.html" },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/blog",
-      "dest": "/blog.html"
-    },
-    {
-      "src": "/blog-details",
-      "dest": "/blog-details.html"
-    },
-    {
-      "src": "/project-details",
-      "dest": "/project-details.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "cleanUrls": true,
+  "trailingSlash": false
 }
