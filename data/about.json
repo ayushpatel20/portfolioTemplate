@@ -1,0 +1,20 @@
+{
+  "hero": {
+    "description": "We are dedicated to transforming businesses through innovative technology solutions that drive growth and efficiency. We empower organizations with tailored digital services.",
+    "tag1": "Digital Marketing",
+    "tag2": "Creative startup",
+    "tag3": "7x Award winning",
+    "title": "Digital Startup",
+    "bgImage": "assets/imgs/pattern-bg.webp"
+  },
+  "experience": {
+    "count": "22k",
+    "suffix": "+",
+    "text": "Uifolio support <br> peoples from all over the world"
+  },
+  "intro": {
+    "title": "We help business elevate their value through custom",
+    "highlightedText": "software development, product design, QA and consulting services",
+    "description": "Our team of experts is dedicated to helping you achieve your digital goals. From website design and development to SEO, PPC advertising, and social media marketing."
+  }
+}

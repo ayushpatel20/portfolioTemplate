@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1",
+    "title": "The top Digital Marketing strategies for business growth",
+    "category": "Marketing",
+    "date": "25 Aug 2025",
+    "image": "assets/imgs/blog/1.png",
+    "author": "Carol Buyers",
+    "content": "Digital marketing represents the future of business scaling. Through precision retargeting, SEO optimizations, and cohesive branding across social networks, modern businesses are multiplying their reach. In this article, we cover key techniques including dynamic PPC models, organic link building, and utilizing custom analytics dashboard interfaces to optimize conversion funnels."
+  },
+  {
+    "id": "2",
+    "title": "How to furnish and decorate a creative agency office",
+    "category": "Design",
+    "date": "28 Aug 2025",
+    "image": "assets/imgs/blog/2.png",
+    "author": "Smith Cogar",
+    "content": "The workspace directly influences creativity and cognitive performance. Creative agency offices require a delicate balance between open collaboration zones and quiet, focused pods. Implementing natural lighting, minimal glass borders, ergonomic wooden furniture, and curated plants promotes high-energy ideas while keeping stress levels low."
+  },
+  {
+    "id": "3",
+    "title": "Unlocking web speed metrics: A guide to Lighthouse 100/100",
+    "category": "Development",
+    "date": "02 Sep 2025",
+    "image": "assets/imgs/blog/3.png",
+    "author": "Bryce Cayetano",
+    "content": "Achieving a perfect Lighthouse score requires extreme care in asset optimization. Key actions include converting raw images to WebP/AVIF formats, deferring non-critical third-party scripts, enabling text compression, and structuring HTML with minimal DOM depth. We walk through critical configuration patterns using native browser features."
+  },
+  {
+    "id": "4",
+    "title": "Simple tips for effective social media marketing campaigns",
+    "category": "Social",
+    "date": "10 Sep 2025",
+    "image": "assets/imgs/blog/4.png",
+    "author": "Mariana Pedroza",
+    "content": "Successful social media campaigns tell a story rather than pushing a product directly. Through video storytelling, interactive polls, micro-influencer alignments, and consistent visual templates, brands foster genuine relationships. Learn the visual grid systems that keep users engaged on mobile platforms."
+  }
+]

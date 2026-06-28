@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Carol Buyers",
+    "role": "CEO and Founder",
+    "image": "assets/imgs/team/1.jpg",
+    "columnClass": "col-lg-3 col-md-6",
+    "itemClass": "item mb-80px mt-40px",
+    "heightClass": "h-450px"
+  },
+  {
+    "name": "Smith Cogar",
+    "role": "CTO and Partner",
+    "image": "assets/imgs/team/2.jpg",
+    "columnClass": "col-lg-3 offset-lg-6 col-md-6",
+    "itemClass": "item mb-80px mt-mins",
+    "heightClass": "h-500px"
+  },
+  {
+    "name": "Berry Harrington",
+    "role": "Business Analyst & Strategist",
+    "image": "assets/imgs/team/3.jpg",
+    "columnClass": "col-lg-3 offset-lg-2 col-md-6",
+    "itemClass": "item mb-80px mt-40px",
+    "heightClass": "h-500px"
+  },
+  {
+    "name": "Pablo Stanley",
+    "role": "Product Manager",
+    "image": "assets/imgs/team/4.jpg",
+    "columnClass": "col-lg-3 offset-lg-2 col-md-6 d-flex align-items-center",
+    "itemClass": "item mb-80px mt-40px",
+    "heightClass": "h-450px"
+  },
+  {
+    "name": "Bryce Cayetano",
+    "role": "Lead Product Developer",
+    "image": "assets/imgs/team/6.jpg",
+    "columnClass": "col-lg-3 col-md-6 d-flex align-items-end",
+    "itemClass": "item md-mb80 mt-40px",
+    "heightClass": "h-400px"
+  },
+  {
+    "name": "Mariana Pedroza",
+    "role": "Lead Product Designer",
+    "image": "assets/imgs/team/4.jpg",
+    "columnClass": "col-lg-3 offset-lg-1 col-md-6 md-order-1",
+    "itemClass": "item md-mb80 mt-40px",
+    "heightClass": "h-500px"
+  }
+]

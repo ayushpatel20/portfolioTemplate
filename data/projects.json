@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "title": "Cute Dog",
+    "category": "Photo",
+    "bgImage": "assets/imgs/works/1.webp",
+    "client": "Envato Market",
+    "date": "20 Aug 2025",
+    "service": "Photography",
+    "description": "Dynamic web development and custom graphics design showcasing highly aesthetic photo collections.",
+    "liveUrl": "#",
+    "githubUrl": "#",
+    "techStack": ["HTML5", "CSS3", "JavaScript"],
+    "gallery": [
+      "assets/imgs/works/1.webp",
+      "assets/imgs/works/2.webp",
+      "assets/imgs/works/3.webp"
+    ]
+  },
+  {
+    "id": "2",
+    "title": "Aurora Pulse",
+    "category": "Branding",
+    "bgImage": "assets/imgs/works/2.webp",
+    "client": "Creative Studio",
+    "date": "10 Sep 2025",
+    "service": "Identity & Branding",
+    "description": "Visual identity design for Aurora Pulse, incorporating customized typography and gradient assets.",
+    "liveUrl": "#",
+    "githubUrl": "#",
+    "techStack": ["Figma", "Illustrator", "React"],
+    "gallery": [
+      "assets/imgs/works/2.webp",
+      "assets/imgs/works/1.webp",
+      "assets/imgs/works/3.webp"
+    ]
+  },
+  {
+    "id": "3",
+    "title": "Fusion Realm",
+    "category": "Branding",
+    "bgImage": "assets/imgs/works/3.webp",
+    "client": "Fusion Corp",
+    "date": "05 Oct 2025",
+    "service": "App Interface",
+    "description": "Immersive landing page design and dynamic layouts supporting smooth mouse scrolling interactions.",
+    "liveUrl": "#",
+    "githubUrl": "#",
+    "techStack": ["Vue.js", "GSAP", "Sass"],
+    "gallery": [
+      "assets/imgs/works/3.webp",
+      "assets/imgs/works/2.webp",
+      "assets/imgs/works/1.webp"
+    ]
+  }
+]

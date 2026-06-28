@@ -1,0 +1,58 @@
+{
+  "generalServices": [
+    {
+      "title": "Web <br> Development",
+      "icon": "assets/imgs/serv/1.svg",
+      "description": "Live workshop where we define the main problems and challenges before building ."
+    },
+    {
+      "title": "UI-UX <br> Designing",
+      "icon": "assets/imgs/serv/2.svg",
+      "description": "Live workshop where we define the main problems and challenges before building ."
+    },
+    {
+      "title": "Digital <br> Marketing",
+      "icon": "assets/imgs/serv/5.svg",
+      "description": "Live workshop where we define the main problems and challenges before building ."
+    },
+    {
+      "title": "Product <br> Design",
+      "icon": "assets/imgs/serv/4.svg",
+      "description": "Live workshop where we define the main problems and challenges before building ."
+    }
+  ],
+  "featuredServices": [
+    {
+      "id": "1",
+      "num": "01",
+      "title": "Digital Marketing",
+      "bgImage": "assets/imgs/serv/1.webp",
+      "tags": ["Online Marketing", "Strategy", "Market Research", "SEO-Marketing"],
+      "description": "We measure our success by the success of our clients. With a focus on results and a dedication to quality, our mission is to deliver digital solutions."
+    },
+    {
+      "id": "2",
+      "num": "02",
+      "title": "UI-UX Design",
+      "bgImage": "assets/imgs/serv/2.webp",
+      "tags": ["UI UX Consulting", "UX Research", "Usability Testing", "Prototyping"],
+      "description": "We measure our success by the success of our clients. With a focus on results and a dedication to quality, our mission is to deliver digital solutions."
+    },
+    {
+      "id": "3",
+      "num": "03",
+      "title": "Development",
+      "bgImage": "assets/imgs/serv/3.png",
+      "tags": ["WordPress", "Laravel Framework", "React & Flutter", "Design System"],
+      "description": "We measure our success by the success of our clients. With a focus on results and a dedication to quality, our mission is to deliver digital solutions."
+    },
+    {
+      "id": "4",
+      "num": "04",
+      "title": "Branding",
+      "bgImage": "assets/imgs/serv/4.jpg",
+      "tags": ["Brand Identity", "Creative Direction", "Branding Strategy", "Graphic Design"],
+      "description": "We measure our success by the success of our clients. With a focus on results and a dedication to quality, our mission is to deliver digital solutions."
+    }
+  ]
+}

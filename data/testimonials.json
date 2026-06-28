@@ -1,0 +1,30 @@
+[
+  {
+    "quote": "“A rebrand is not typically done in a chaotic, archaic industry like ours, so their work has really set us apart. 10/10 for Hub’s team.\"",
+    "author": "B. Gordon",
+    "role": "CEO Founder, Archin Studio",
+    "avatar": "assets/imgs/testim/1.jpg",
+    "bgClass": ""
+  },
+  {
+    "quote": "“They took our design system and scaled it globally with stunning animations. The team was fast, professional, and delivered top-notch results.\"",
+    "author": "Carol Buyers",
+    "role": "CTO, Tech Solutions",
+    "avatar": "assets/imgs/testim/1.jpg",
+    "bgClass": "bg-light"
+  },
+  {
+    "quote": "“A rebrand is not typically done in a chaotic, archaic industry like ours, so their work has really set us apart. 10/10 for Hub’s team.\"",
+    "author": "Smith Cogar",
+    "role": "Founder, CloudFlow",
+    "avatar": "assets/imgs/testim/1.jpg",
+    "bgClass": ""
+  },
+  {
+    "quote": "“The animations are fluid, the layout is clean, and the dynamic JSON data loading structure makes updates incredibly easy. Highly recommended.\"",
+    "author": "Berry Harrington",
+    "role": "Lead Architect, Fusion Corp",
+    "avatar": "assets/imgs/testim/1.jpg",
+    "bgClass": "bg-main-color"
+  }
+]

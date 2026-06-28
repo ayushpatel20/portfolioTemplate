@@ -1,0 +1,17 @@
+{
+  "siteName": "Uifolio",
+  "logoLight": "assets/imgs/ui-logo-light1.svg",
+  "logoDark": "assets/imgs/logo-dark.png",
+  "contact": {
+    "address": "49 Brimmer St, Boston, MA 02108",
+    "email": "hello@archin.co",
+    "phone": "(054) 3256 78 87"
+  },
+  "socialLinks": [
+    { "platform": "x-twitter", "url": "#", "iconClass": "fab fa-x-twitter" },
+    { "platform": "facebook", "url": "#", "iconClass": "fab fa-facebook-f" },
+    { "platform": "instagram", "url": "#", "iconClass": "fab fa-instagram" },
+    { "platform": "linkedin", "url": "#", "iconClass": "fab fa-linkedin-in" },
+    { "platform": "youtube", "url": "#", "iconClass": "fab fa-youtube" }
+  ]
+}
