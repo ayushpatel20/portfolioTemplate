@@ -108,36 +108,54 @@
   letter-spacing: 3px !important;
   font-size: 11px !important;
 }
+/* ─── HERO MAIN TITLE — DIGITAL STARTUP ─── */
+.hero-title-main {
+  font-family: 'Poppins', 'Inter', sans-serif !important;
+  font-size: clamp(6rem, 10vw, 9rem) !important;
+  font-weight: 900 !important;
+  color: #FF6B3D !important;
+  letter-spacing: -0.05em !important;
+  line-height: 0.9 !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  margin-top: 30px !important;
+  margin-bottom: 50px !important;
+  opacity: 0; /* GSAP animates this in */
+  will-change: transform, opacity;
+}
+
 /* ─── HERO MAIN CONTENT CONTAINER ─── */
 .hero-main-content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  max-width: 600px;
+  align-items: center;
+  width: 100%;
 }
 
-/* ─── HERO DESCRIPTION (primary hero content, shown directly below the label) ─── */
+/* ─── HERO DESCRIPTION ─── */
 .hero-desc-text {
   font-family: 'Poppins', sans-serif !important;
   font-size: clamp(17px, 1.6vw, 20px) !important;
   font-weight: 400 !important;
   color: rgba(255, 255, 255, 0.85) !important;
   line-height: 1.75 !important;
-  max-width: 580px !important;
-  text-align: left !important;
+  max-width: 620px !important;
+  text-align: center !important;
   margin-top: 0 !important;
   margin-bottom: 40px !important;
-  opacity: 0; /* animated by GSAP */
+  opacity: 0; /* GSAP animates this in */
   will-change: opacity, transform;
 }
 
-/* Responsive desc adjustments */
+/* Responsive adjustments */
 @media (max-width: 991px) {
-  .hero-main-content { max-width: 100%; }
-  .hero-desc-text { font-size: 17px !important; }
+  .hero-title-main { font-size: clamp(4rem, 9vw, 7rem) !important; }
+  .hero-desc-text  { font-size: 17px !important; }
 }
 @media (max-width: 576px) {
-  .hero-desc-text { font-size: 15px !important; line-height: 1.65 !important; }
+  .hero-title-main { font-size: clamp(2.8rem, 10vw, 4.5rem) !important; white-space: normal !important; }
+  .hero-desc-text  { font-size: 15px !important; line-height: 1.65 !important; }
 }
 .hero-top-label-item {
   font-family: 'Poppins', sans-serif;

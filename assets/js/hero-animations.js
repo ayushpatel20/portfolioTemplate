@@ -41,6 +41,20 @@
         ease: "power3.out"
       }, 0.9);
 
+    // Heading: one-shot entrance animation
+    gsap.fromTo(".hero-title-main", {
+      opacity: 0,
+      y: 40,
+      scale: 0.96
+    }, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 1.0,
+      ease: "power4.out",
+      delay: 0.2
+    });
+
     // 3. Slow parallax scroll for background image
     const heroBg = document.getElementById("hero-bg");
     if (heroBg) {
