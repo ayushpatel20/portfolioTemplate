@@ -6,26 +6,33 @@ let lenis;
 
 // Function to initialize Lenis for smooth scrolling
 const initSmoothScrolling = () => {
-	// Instantiate the Lenis object with specified properties
-	lenis = new Lenis({
-		lerp: 0.1, // Lower values create a smoother scroll effect
-		smoothWheel: true // Enables smooth scrolling for mouse wheel events
-	});
+	if (typeof ScrollSmoother !== "undefined" && ScrollSmoother.get()) {
+		console.log("ScrollSmoother is active; skipping Lenis smooth scroll.");
+		return;
+	}
+	if (typeof Lenis !== "undefined") {
+		// Instantiate the Lenis object with specified properties
+		lenis = new Lenis({
+			lerp: 0.1, // Lower values create a smoother scroll effect
+			smoothWheel: true // Enables smooth scrolling for mouse wheel events
+		});
 
-	// Update ScrollTrigger each time the user scrolls
-	lenis.on('scroll', () => ScrollTrigger.update());
+		// Update ScrollTrigger each time the user scrolls
+		lenis.on('scroll', () => ScrollTrigger.update());
 
-	// Define a function to run at each animation frame
-	const scrollFn = (time) => {
-		lenis.raf(time); // Run Lenis' requestAnimationFrame method
-		requestAnimationFrame(scrollFn); // Recursively call scrollFn on each frame
-	};
-	// Start the animation frame loop
-	requestAnimationFrame(scrollFn);
+		// Define a function to run at each animation frame
+		const scrollFn = (time) => {
+			lenis.raf(time); // Run Lenis' requestAnimationFrame method
+			requestAnimationFrame(scrollFn); // Recursively call scrollFn on each frame
+		};
+		// Start the animation frame loop
+		requestAnimationFrame(scrollFn);
+	}
 };
 
 // Function to trigger Flip animations when scrolling
 const triggerFlipOnScroll = (galleryEl, options) => {
+	if (window.innerWidth < 992) return;
 	// Default settings for Flip and ScrollTrigger
 	let settings = {
 		flip: {
@@ -57,6 +64,33 @@ const triggerFlipOnScroll = (galleryEl, options) => {
 	// Remove the final class to revert to the initial state
 	galleryEl.classList.remove('gallery--switch');
 	
+	// Target the newly structured caption elements
+	const ourWord = galleryEl.querySelector('.title-our');
+	const teamWord = galleryEl.querySelector('.title-team');
+	
+	// Create the title animation timeline
+	const titleTl = gsap.timeline({ paused: true });
+	titleTl.fromTo(ourWord, {
+		opacity: 0,
+		y: 30
+	}, {
+		opacity: 1,
+		y: 0,
+		duration: 0.8,
+		ease: "power4.out"
+	})
+	.fromTo(teamWord, {
+		opacity: 0,
+		y: 30
+	}, {
+		opacity: 1,
+		y: 0,
+		duration: 0.8,
+		ease: "power4.out"
+	}, 0.15); // stagger offset of 0.15s
+
+	let titleAnimated = false;
+
 	// Create the Flip animation timeline
 	const tl = Flip.to(flipstate, {
 		ease: 'none',
@@ -69,7 +103,36 @@ const triggerFlipOnScroll = (galleryEl, options) => {
 			start: settings.scrollTrigger.start,
 			end: settings.scrollTrigger.end,
 			pin: galleryEl.parentNode,
-			scrub: true,
+			scrub: 1.2,
+			onUpdate: self => {
+				let progress = self.progress;
+				
+				// Card scale and shadow logic (1 -> 0.98 -> 1 scale, and dynamic shadow)
+				let scaleVal = 1 - 0.02 * Math.sin(progress * Math.PI);
+				let shadowBlur = 25 + 20 * Math.sin(progress * Math.PI);
+				let shadowOpacity = 0.4 + 0.2 * Math.sin(progress * Math.PI);
+				
+				gsap.set(galleryItems, { 
+					scale: scaleVal,
+					boxShadow: `0 ${10 + 10 * Math.sin(progress * Math.PI)}px ${shadowBlur}px rgba(0, 0, 0, ${shadowOpacity})`,
+					force3D: true
+				});
+				
+				// Title animation triggers when cards are fully collapsed
+				if (progress >= 0.98) {
+					if (!titleAnimated) {
+						titleAnimated = true;
+						gsap.killTweensOf(titleTl);
+						gsap.delayedCall(0.2, () => titleTl.play());
+					}
+				} else {
+					if (titleAnimated) {
+						titleAnimated = false;
+						gsap.killTweensOf(titleTl);
+						titleTl.reverse();
+					}
+				}
+			}
 		},
 		stagger: settings.stagger
 	});
@@ -84,7 +147,7 @@ const triggerFlipOnScroll = (galleryEl, options) => {
 				trigger: galleryEl,
 				start: settings.scrollTrigger.start,
 				end: settings.scrollTrigger.end,
-				scrub: true,
+				scrub: 1.2,
 			},
 		}, 0)
 	}
@@ -106,8 +169,16 @@ const scroll = () => {
 }
 
 // Preload images, initialize smooth scrolling, apply scroll-triggered animations, and remove loading class from body
-preloadImages('.gallery__item').then(() => {
-	initSmoothScrolling();
-	scroll();
-	document.body.classList.remove('loading');
-});
+const tryInitScroll = () => {
+	const teamGalleryItems = document.querySelectorAll('#gallery-4 .gallery__item');
+	if (teamGalleryItems.length === 0) {
+		setTimeout(tryInitScroll, 50);
+		return;
+	}
+	preloadImages('.gallery__item').then(() => {
+		initSmoothScrolling();
+		scroll();
+		document.body.classList.remove('loading');
+	});
+};
+tryInitScroll();

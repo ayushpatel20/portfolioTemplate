@@ -319,6 +319,8 @@
       <button class="nav-item" id="nav-blogs" onclick="goTo('blogs',this)"><i class="fas fa-pen-nib"></i><span>Blogs</span></button>
       <button class="nav-item" id="nav-team" onclick="goTo('team',this)"><i class="fas fa-users"></i><span>Team</span></button>
       <button class="nav-item" id="nav-testimonials" onclick="goTo('testimonials',this)"><i class="fas fa-quote-right"></i><span>Testimonials</span></button>
+      <div class="nav-section">Inbox</div>
+      <button class="nav-item" id="nav-messages" onclick="goTo('messages',this)"><i class="fas fa-envelope"></i><span>Inbox Messages</span></button>
       <div class="nav-section">Tools</div>
       <a class="nav-item" href="index.html" target="_blank"><i class="fas fa-eye"></i><span>Preview Site</span></a>
       <button class="nav-item" onclick="exportJSON()"><i class="fas fa-download"></i><span>Export JSON</span></button>
@@ -527,6 +529,54 @@
         </div>
       </div>
 
+      <!-- ======= INBOX MESSAGES ======= -->
+      <div class="section-page" id="sec-messages">
+        <!-- Stats cards -->
+        <div class="stats-row" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; margin-bottom:20px;">
+          <div class="card" style="margin-bottom:0; padding:20px; display:flex; align-items:center; gap:15px;">
+            <div style="font-size:32px;">📬</div>
+            <div>
+              <div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Total Inquiries</div>
+              <h3 id="stat-total" style="font-size:24px; font-weight:800; margin-top:4px;">0</h3>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0; padding:20px; display:flex; align-items:center; gap:15px;">
+            <div style="font-size:32px;">🔔</div>
+            <div>
+              <div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Unread Messages</div>
+              <h3 id="stat-unread" style="font-size:24px; font-weight:800; margin-top:4px;">0</h3>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0; padding:20px; display:flex; align-items:center; gap:15px;">
+            <div style="font-size:32px;">✅</div>
+            <div>
+              <div style="font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Read Inquiries</div>
+              <h3 id="stat-read" style="font-size:24px; font-weight:800; margin-top:4px;">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="items-header">
+            <div class="items-title"><i class="fas fa-envelope-open-text"></i> Client Inquiries</div>
+            <div class="filter-controls" style="display:flex; gap:10px;">
+              <select class="form-control" id="msg-filter" style="width:120px; padding:6px 12px; font-size:13px;" onchange="loadMessages(1)">
+                <option value="all">All Messages</option>
+                <option value="unread">Unread</option>
+                <option value="read">Read</option>
+              </select>
+              <input type="text" class="form-control" id="msg-search" placeholder="Search inquiries..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="debounceSearchMessages()">
+            </div>
+          </div>
+          <div id="messages-list-wrapper" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <!-- Messages rendered dynamically -->
+          </div>
+          <div id="messages-pagination" style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+            <!-- Pagination items -->
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -550,11 +600,6 @@
 
 <script>
 // ================================================================
-//  CONFIG  — change the password here
-// ================================================================
-const ADMIN_PASS = 'admin123';
-
-// ================================================================
 //  STATE
 // ================================================================
 const DATA = { profile: null, about: null, services: null, projects: null, blogs: null, team: null, testimonials: null };
@@ -563,24 +608,62 @@ const SRC = { profile: 'data/profile.json', about: 'data/about.json', services: 
 
 let _modalType = null, _editIdx = -1, _tags = [], _gallery = [];
 
+// Self-executing session initializer
+(async function checkSession() {
+  try {
+    const r = await fetch('/api/admin/session');
+    const result = await r.json();
+    if (result.isAuthenticated) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadAll();
+    }
+  } catch (err) {
+    console.log('Not authenticated yet:', err);
+  }
+})();
+
 // ================================================================
 //  LOGIN
 // ================================================================
 document.getElementById('login-pwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-function doLogin() {
-  const v = document.getElementById('login-pwd').value;
-  if (v === ADMIN_PASS) {
+async function doLogin() {
+  const email = 'admin@agency.com';
+  const password = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  
+  try {
+    const response = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Login failed');
+    }
+    
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('login-err').style.display = 'none';
+    errEl.style.display = 'none';
     loadAll();
-  } else {
-    document.getElementById('login-err').style.display = 'block';
+    toast('Authenticated successfully!', 'success');
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
     document.getElementById('login-pwd').value = '';
   }
 }
-function doLogout() {
+
+async function doLogout() {
+  try {
+    await fetch('/api/admin/logout', { method: 'POST' });
+  } catch (err) {
+    console.error('Logout failed on server:', err);
+  }
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-pwd').value = '';
@@ -591,10 +674,24 @@ function doLogout() {
 // ================================================================
 async function loadAll() {
   for (const k of Object.keys(LS)) {
-    const cached = localStorage.getItem(LS[k]);
-    if (cached) { DATA[k] = JSON.parse(cached); continue; }
-    try { const r = await fetch(SRC[k]); DATA[k] = await r.json(); }
-    catch { DATA[k] = defaultFor(k); }
+    try {
+      const r = await fetch('/api/admin/data/' + k);
+      if (!r.ok) throw new Error('Status: ' + r.status);
+      DATA[k] = await r.json();
+    } catch (e) {
+      console.warn(`Failed to load ${k} from server API. Falling back to local data/files.`, e);
+      const cached = localStorage.getItem(LS[k]);
+      if (cached) {
+        DATA[k] = JSON.parse(cached);
+      } else {
+        try {
+          const r = await fetch(SRC[k]);
+          DATA[k] = await r.json();
+        } catch {
+          DATA[k] = defaultFor(k);
+        }
+      }
+    }
   }
   renderAll();
   toast('Portfolio data loaded!', 'success');
@@ -619,19 +716,144 @@ const secMeta = {
   projects:     { title:'Projects',              sub:'Add, edit or remove portfolio projects' },
   blogs:        { title:'Blog Posts',            sub:'Manage your journal / news articles' },
   team:         { title:'Team Members',          sub:'Showcase your team' },
-  testimonials: { title:'Testimonials',          sub:'Client reviews and star ratings' }
+  testimonials: { title:'Testimonials',          sub:'Client reviews and star ratings' },
+  messages:     { title:'Inbox Messages',        sub:'View and manage contact inquiries from the database' }
 };
+
 function goTo(name, btn) {
   document.querySelectorAll('.section-page').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   document.getElementById(`sec-${name}`).classList.add('active');
   btn.classList.add('active');
   const m = secMeta[name];
-  if (m) { document.getElementById('topbar-title').textContent = m.title; document.getElementById('topbar-sub').textContent = m.sub; }
+  if (m) { 
+    document.getElementById('topbar-title').textContent = m.title; 
+    document.getElementById('topbar-sub').textContent = m.sub; 
+  }
+  if (name === 'messages') {
+    loadMessages(1);
+    loadStats();
+  }
 }
 
 // ================================================================
-//  RENDER ALL
+//  MESSAGES INBOX
+// ================================================================
+let debounceTimer;
+function debounceSearchMessages() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    loadMessages(1);
+  }, 300);
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/admin/stats');
+    if (!r.ok) throw new Error();
+    const stats = await r.json();
+    
+    document.getElementById('stat-total').textContent = stats.totalMessages;
+    document.getElementById('stat-unread').textContent = stats.unreadMessages;
+    document.getElementById('stat-read').textContent = stats.totalMessages - stats.unreadMessages;
+  } catch (err) {
+    console.error('Failed to load stats:', err);
+  }
+}
+
+async function loadMessages(page = 1) {
+  const listWrapper = document.getElementById('messages-list-wrapper');
+  if (!listWrapper) return;
+  
+  listWrapper.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading messages...</p></div>';
+  
+  const filter = document.getElementById('msg-filter')?.value || 'all';
+  const search = document.getElementById('msg-search')?.value || '';
+  
+  try {
+    const r = await fetch(`/api/admin/messages?page=${page}&limit=10&filter=${filter}&search=${encodeURIComponent(search)}`);
+    if (!r.ok) throw new Error('Failed to load messages');
+    const result = await r.json();
+    
+    if (!result.messages || result.messages.length === 0) {
+      listWrapper.innerHTML = emptyState('envelope-open');
+      document.getElementById('messages-pagination').innerHTML = '';
+      return;
+    }
+    
+    listWrapper.innerHTML = result.messages.map(msg => `
+      <div class="item-card" style="align-items: flex-start; padding: 18px; border-left: 3px solid ${msg.isRead ? 'var(--border)' : 'var(--accent)'}; background: ${msg.isRead ? 'var(--input-bg)' : 'rgba(249,115,22,0.03)'}">
+        <div class="item-info" style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h6 class="item-name" style="font-size:15px; font-weight:700;">${esc(msg.name)} 
+              ${msg.isRead ? '' : '<span style="background:var(--accent); color:#fff; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:8px; font-weight:600;">NEW</span>'}
+            </h6>
+            <span style="font-size:11px; color:var(--text-muted);">${new Date(msg.createdAt).toLocaleString()}</span>
+          </div>
+          <div class="item-meta" style="margin-top:6px; font-weight:600; font-size:12.5px; color:var(--text);">${esc(msg.email)} ${msg.phone ? ' · ' + esc(msg.phone) : ''}</div>
+          <div style="font-size:13.5px; color:var(--text); margin-top:8px; font-weight:500;">Subject: <span style="color:var(--text-muted);">${esc(msg.subject)}</span></div>
+          <div style="font-size:13.5px; color:rgba(255,255,255,0.7); margin-top:10px; padding:10px 14px; background:rgba(0,0,0,0.2); border-radius:6px; line-height:1.6; white-space:pre-wrap;">${esc(msg.message)}</div>
+        </div>
+        <div class="item-actions" style="margin-top:0; align-self: flex-start; gap:8px;">
+          ${msg.isRead ? '' : `<button class="btn-icon" onclick="markMessageRead(${msg.id})" title="Mark as Read"><i class="fas fa-check"></i></button>`}
+          <button class="btn-icon del" onclick="deleteMessage(${msg.id})" title="Delete Message"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('\n');
+    
+    renderMessagesPagination(result.pagination);
+  } catch (err) {
+    listWrapper.innerHTML = `<div class="empty-state" style="color:var(--danger);"><i class="fas fa-exclamation-circle"></i><p>${err.message}</p></div>`;
+  }
+}
+
+async function markMessageRead(id) {
+  try {
+    const r = await fetch(`/api/admin/messages/${id}/read`, { method: 'PATCH' });
+    if (!r.ok) throw new Error();
+    toast('Message marked as read', 'success');
+    loadMessages(1);
+    loadStats();
+  } catch (err) {
+    toast('Failed to update message', 'error');
+  }
+}
+
+async function deleteMessage(id) {
+  if (!confirm('Are you sure you want to delete this message?')) return;
+  try {
+    const r = await fetch(`/api/admin/messages/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error();
+    toast('Message deleted successfully', 'success');
+    loadMessages(1);
+    loadStats();
+  } catch (err) {
+    toast('Failed to delete message', 'error');
+  }
+}
+
+function renderMessagesPagination(pag) {
+  const pEl = document.getElementById('messages-pagination');
+  if (!pEl) return;
+  
+  if (pag.totalPages <= 1) {
+    pEl.innerHTML = '';
+    return;
+  }
+  
+  let html = '';
+  for (let pageNum = 1; pageNum <= pag.totalPages; pageNum++) {
+    html += `
+      <button class="btn-icon ${pageNum === pag.page ? 'active' : ''}" 
+              style="width:36px; height:36px; font-weight:600; border-color:${pageNum === pag.page ? 'var(--accent)' : 'var(--border)'}; color:${pageNum === pag.page ? 'var(--accent)' : 'var(--text)'}" 
+              onclick="loadMessages(${pageNum})">${pageNum}</button>
+    `;
+  }
+  pEl.innerHTML = html;
+}
+
+// ================================================================
+//  RENDER ALL DATA EDITORS
 // ================================================================
 function renderAll() {
   renderProfile(); renderAbout(); renderServices();
@@ -671,10 +893,10 @@ function renderSocials() {
 }
 function addSocial() { if (!DATA.profile.socialLinks) DATA.profile.socialLinks = []; DATA.profile.socialLinks.push({ platform:'', url:'#', iconClass:'' }); renderSocials(); }
 function removeSocial(i) { DATA.profile.socialLinks.splice(i, 1); renderSocials(); }
-function saveProfile() {
+async function saveProfile() {
   DATA.profile.siteName = g('p-siteName');
   DATA.profile.contact = { address: g('p-address'), email: g('p-email'), phone: g('p-phone') };
-  persistKey('profile');
+  await persistKey('profile');
 }
 
 // --- About ---
@@ -693,13 +915,13 @@ function renderAbout() {
   val('a-introHL',  a.intro?.highlightedText);
   val('a-introDesc',a.intro?.description);
 }
-function saveAbout() {
+async function saveAbout() {
   DATA.about = {
     hero: { title:g('a-title'), tag1:g('a-tag1'), tag2:g('a-tag2'), tag3:g('a-tag3'), description:g('a-heroDesc'), bgImage:g('a-heroBg') },
     experience: { count:g('a-expCount'), suffix:g('a-expSuffix'), text:g('a-expText') },
     intro: { title:g('a-introTitle'), highlightedText:g('a-introHL'), description:g('a-introDesc') }
   };
-  persistKey('about');
+  await persistKey('about');
 }
 
 // --- Services ---
@@ -730,7 +952,7 @@ function renderServices() {
       </div>
     </div>`).join('');
 }
-function saveServices() { persistKey('services'); }
+async function saveServices() { await persistKey('services'); }
 
 // --- Generic item list ---
 function renderItemList(key, cardFn) {
@@ -748,55 +970,78 @@ function itemCard(name, meta, editFn, delFn) {
     <div class="item-actions">
       <button class="btn-icon" onclick="${editFn}" title="Edit"><i class="fas fa-pen"></i></button>
       <button class="btn-icon del" onclick="${delFn}" title="Delete"><i class="fas fa-trash"></i></button>
-    </div></div>`;
+    </div>
+  </div>`;
+}
+
+async function persistKey(key) {
+  try {
+    const response = await fetch('/api/admin/data/' + key, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(DATA[key])
+    });
+    if (!response.ok) throw new Error('API write failed');
+    toast(`Successfully saved ${key} changes to server!`, 'success');
+  } catch (err) {
+    console.error(`Save to server failed, writing to localStorage.`, err);
+    localStorage.setItem(LS[key], JSON.stringify(DATA[key]));
+    toast('Saved to Local Browser Cache (offline mode)', 'info');
+  }
+}
+
+// --- Delete Item ---
+async function delItem(type, idx) {
+  if (!confirm('Are you sure you want to delete this item?')) return;
+  if (type === 'gserv') DATA.services.generalServices.splice(idx,1);
+  else if (type === 'fserv') DATA.services.featuredServices.splice(idx,1);
+  else if (['project','blog','team','testimonial'].includes(type)) {
+    const key = type === 'testimonial' ? 'testimonials' : type + 's';
+    DATA[key].splice(idx,1);
+  }
+  
+  if (type === 'gserv' || type === 'fserv') { renderServices(); await saveServices(); }
+  else {
+    const key = type === 'testimonial' ? 'testimonials' : type + 's';
+    const cardFn = type === 'project' ? renderProjectCard : type === 'blog' ? renderBlogCard : type === 'team' ? renderTeamCard : renderTestimonialCard;
+    renderItemList(key, cardFn);
+    await persistKey(key);
+  }
+  toast('Item deleted successfully', 'success');
 }
 
 // ================================================================
-//  PERSIST
+//  MODAL FORM POPUP
 // ================================================================
-function persistKey(key) {
-  localStorage.setItem(LS[key], JSON.stringify(DATA[key]));
-  toast(`${key.charAt(0).toUpperCase()+key.slice(1)} saved! ✓`, 'success');
-}
-
-// ================================================================
-//  DELETE
-// ================================================================
-function delItem(type, i) {
-  if (!confirm('Delete this item?')) return;
-  if (type === 'gserv')  { DATA.services.generalServices.splice(i,1); renderServices(); saveServices(); }
-  else if (type === 'fserv')  { DATA.services.featuredServices.splice(i,1); renderServices(); saveServices(); }
-  else if (type === 'project') { DATA.projects.splice(i,1); renderItemList('projects',renderProjectCard); persistKey('projects'); }
-  else if (type === 'blog')    { DATA.blogs.splice(i,1); renderItemList('blogs',renderBlogCard); persistKey('blogs'); }
-  else if (type === 'team')    { DATA.team.splice(i,1); renderItemList('team',renderTeamCard); persistKey('team'); }
-  else if (type === 'testimonial') { DATA.testimonials.splice(i,1); renderItemList('testimonials',renderTestimonialCard); persistKey('testimonials'); }
-  toast('Deleted', 'info');
-}
-
-// ================================================================
-//  MODAL
-// ================================================================
-function openModal(type, idx = -1) {
-  _modalType = type; _editIdx = idx; _tags = []; _gallery = [];
+function openModal(type, idx=-1) {
+  _modalType = type; _editIdx = idx;
   const isEdit = idx >= 0;
-  const item = isEdit ? getItem(type, idx) : null;
-  const names = { gserv:'General Service', fserv:'Featured Service', project:'Project', blog:'Blog Post', team:'Team Member', testimonial:'Testimonial' };
-  document.getElementById('modal-title').textContent = (isEdit ? 'Edit ' : 'Add ') + (names[type]||type);
+  document.getElementById('modal-title').textContent = isEdit ? 'Edit Item' : 'Add Item';
+  
+  let item = null;
+  if (isEdit) {
+    if (type === 'gserv') item = DATA.services.generalServices[idx];
+    else if (type === 'fserv') item = DATA.services.featuredServices[idx];
+    else {
+      const key = type === 'testimonial' ? 'testimonials' : type + 's';
+      item = DATA[key][idx];
+    }
+  }
+
+  // Draw tags or gallery
+  _tags = (type === 'fserv' && item?.tags) ? [...item.tags] : [];
+  _gallery = (type === 'project' && item?.gallery) ? [...item.gallery] : [];
+
   document.getElementById('modal-body').innerHTML = modalForm(type, item);
-  if (type === 'fserv') { _tags = [...(item?.tags||[])]; drawTags(); }
-  if (type === 'project') { _gallery = [...(item?.gallery?.length ? item.gallery : [''])]; drawGallery(); }
+  
+  if (type === 'fserv') drawTags();
+  if (type === 'project') drawGallery();
+
   document.getElementById('modal-overlay').classList.add('open');
 }
-function getItem(type, i) {
-  if (type === 'gserv') return DATA.services.generalServices[i];
-  if (type === 'fserv') return DATA.services.featuredServices[i];
-  if (type === 'project') return DATA.projects[i];
-  if (type === 'blog') return DATA.blogs[i];
-  if (type === 'team') return DATA.team[i];
-  if (type === 'testimonial') return DATA.testimonials[i];
-}
+
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
-function overlayClose(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+function overlayClose(e) { if (e.target.id === 'modal-overlay') closeModal(); }
 
 function modalForm(type, item) {
   const v = (f, d='') => esc(item ? (item[f]??d) : d);
@@ -934,7 +1179,7 @@ function drawGallery() {
 }
 
 // Confirm modal save
-function modalConfirm() {
+async function modalConfirm() {
   const r = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const t = _modalType, i = _editIdx, isEdit = i >= 0;
 
@@ -965,12 +1210,12 @@ function modalConfirm() {
   if (!obj) return;
 
   // Commit
-  if (t === 'gserv')  { isEdit ? DATA.services.generalServices.splice(i,1,obj) : DATA.services.generalServices.push(obj); renderServices(); saveServices(); }
-  else if (t === 'fserv') { isEdit ? DATA.services.featuredServices.splice(i,1,obj) : DATA.services.featuredServices.push(obj); renderServices(); saveServices(); }
-  else if (t === 'project') { isEdit ? DATA.projects.splice(i,1,obj) : DATA.projects.push(obj); renderItemList('projects',renderProjectCard); persistKey('projects'); }
-  else if (t === 'blog')    { isEdit ? DATA.blogs.splice(i,1,obj) : DATA.blogs.push(obj); renderItemList('blogs',renderBlogCard); persistKey('blogs'); }
-  else if (t === 'team')    { isEdit ? DATA.team.splice(i,1,obj) : DATA.team.push(obj); renderItemList('team',renderTeamCard); persistKey('team'); }
-  else if (t === 'testimonial') { isEdit ? DATA.testimonials.splice(i,1,obj) : DATA.testimonials.push(obj); renderItemList('testimonials',renderTestimonialCard); persistKey('testimonials'); }
+  if (t === 'gserv')  { isEdit ? DATA.services.generalServices.splice(i,1,obj) : DATA.services.generalServices.push(obj); renderServices(); await saveServices(); }
+  else if (t === 'fserv') { isEdit ? DATA.services.featuredServices.splice(i,1,obj) : DATA.services.featuredServices.push(obj); renderServices(); await saveServices(); }
+  else if (t === 'project') { isEdit ? DATA.projects.splice(i,1,obj) : DATA.projects.push(obj); renderItemList('projects',renderProjectCard); await persistKey('projects'); }
+  else if (t === 'blog')    { isEdit ? DATA.blogs.splice(i,1,obj) : DATA.blogs.push(obj); renderItemList('blogs',renderBlogCard); await persistKey('blogs'); }
+  else if (t === 'team')    { isEdit ? DATA.team.splice(i,1,obj) : DATA.team.push(obj); renderItemList('team',renderTeamCard); await persistKey('team'); }
+  else if (t === 'testimonial') { isEdit ? DATA.testimonials.splice(i,1,obj) : DATA.testimonials.push(obj); renderItemList('testimonials',renderTestimonialCard); await persistKey('testimonials'); }
 
   closeModal();
   toast('Saved successfully!', 'success');
@@ -987,7 +1232,7 @@ function exportJSON() {
     const a = Object.assign(document.createElement('a'), { href:URL.createObjectURL(blob), download:name });
     a.click(); URL.revokeObjectURL(a.href);
   }
-  toast('7 JSON files exported! Replace files in data/ folder & redeploy to Vercel.', 'success');
+  toast('7 JSON files exported!', 'success');
 }
 
 // ================================================================
@@ -1019,7 +1264,7 @@ function g(id) { const el=document.getElementById(id); return el?el.value.trim()
 function val(id, v) { const el=document.getElementById(id); if(el) el.value = v||''; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function stripHtml(s) { return String(s||'').replace(/<[^>]*>/g,' ').trim(); }
-function emptyState(icon) { return `<div class="empty-state"><i class="fas fa-${icon}"></i><p>Nothing here yet. Click "Add" to get started.</p></div>`; }
+function emptyState(icon) { return `<div class="empty-state"><i class="fas fa-${icon}"></i><p>Nothing here yet.</p></div>`; }
 </script>
 </body>
 </html>

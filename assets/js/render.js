@@ -34,7 +34,36 @@ async function fetchJSON(filePath) {
     try {
         // Build localStorage key from file path: "data/profile.json" → "portfolio_profile"
         const lsKey = 'portfolio_' + filePath.replace('data/', '').replace('.json', '');
-        const cached = localStorage.getItem(lsKey);
+        let cached = localStorage.getItem(lsKey);
+        
+        // Clear cached legacy webp projects to load on-disk png works images
+        if (lsKey === 'portfolio_projects' && cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed.some(p => p.bgImage && p.bgImage.includes('.webp'))) {
+                    localStorage.removeItem(lsKey);
+                    cached = null;
+                }
+            } catch (e) {
+                localStorage.removeItem(lsKey);
+                cached = null;
+            }
+        }
+
+        // Clear cached legacy about settings to load high-res hero background image
+        if (lsKey === 'portfolio_about' && cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (parsed.hero && parsed.hero.bgImage && parsed.hero.bgImage.includes('pattern-bg')) {
+                    localStorage.removeItem(lsKey);
+                    cached = null;
+                }
+            } catch (e) {
+                localStorage.removeItem(lsKey);
+                cached = null;
+            }
+        }
+        
         if (cached) {
             return JSON.parse(cached);
         }
@@ -70,7 +99,6 @@ function getQueryParam(name) {
 // Render dynamic components
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Load layout components
-    await loadComponent("loader-placeholder", "components/loader.html");
     await loadComponent("cursor-placeholder", "components/cursor.html");
     await loadComponent("navbar-placeholder", "components/navbar.html");
     await loadComponent("footer-placeholder", "components/footer.html");
@@ -128,6 +156,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     script.src = "assets/js/scripts.js";
     script.onload = () => {
         triggerThemeReady();
+        setTimeout(() => {
+            if (typeof ScrollTrigger !== "undefined") {
+                ScrollTrigger.refresh();
+                console.log("ScrollTrigger refreshed after layout render.");
+            }
+        }, 300);
     };
     document.body.appendChild(script);
 });
@@ -146,8 +180,10 @@ async function renderHomeStartup() {
     if (about) {
         // Render Hero
         if (about.hero) {
-            const heroDesc = document.getElementById("hero-desc");
-            if (heroDesc) heroDesc.textContent = about.hero.description;
+            const heroDescs = document.querySelectorAll("#hero-desc, .hero-desc-text");
+            heroDescs.forEach(el => {
+                el.textContent = about.hero.description;
+            });
             
             const heroTag1 = document.getElementById("hero-tag1");
             if (heroTag1) heroTag1.textContent = about.hero.tag1;
@@ -317,45 +353,35 @@ async function renderHomeStartup() {
         }
     }
 
-    // Render Team List
+    // Render Team List — Horizontal collapse layout using original cards and layout
     if (team) {
-        const teamContainer = document.getElementById("team-container");
-        if (teamContainer) {
-            let html = team.map(member => `
-                <div class="${member.columnClass}">
+        const galleryContainer = document.getElementById("gallery-4");
+        if (galleryContainer) {
+            let html = team.slice(0, 6).map((member, i) => `
+                <div class="gallery__item">
                     <div class="${member.itemClass}">
                         <a href="#0" class="w-100 fit-img ${member.heightClass}">
-                            <img src="${member.image}" alt="">
+                            <img src="${member.image}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
                         </a>
-                        <div class="cont">
+                        <div class="cont mt-15px">
                             <h6>${member.name}</h6>
-                            <span class="text-uppercase mt-15px fs-14 opacity-7">${member.role}</span>
+                            <span class="text-uppercase mt-10px fs-14 opacity-7 d-block">${member.role}</span>
                         </div>
                     </div>
                 </div>
             `).join('\n');
-
-            // Add the dynamic "View All" element at the end
+            
+            // Add the "Our Team" caption
             html += `
-                <div class="col-lg-4 offset-lg-1 col-md-6 offset-md-3 md-order-2">
-                    <div class="butn-item h-100 mb-40px d-flex align-items-end justify-content-center">
-                        <a href="#0"
-                            class="butn-circle butn-light d-flex align-items-center justify-content-center text-align-center">
-                            <div>
-                                <span><svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M13.922 4.5V11.8125C13.922 11.9244 13.8776 12.0317 13.7985 12.1108C13.7193 12.1899 13.612 12.2344 13.5002 12.2344C13.3883 12.2344 13.281 12.1899 13.2018 12.1108C13.1227 12.0317 13.0783 11.9244 13.0783 11.8125V5.51953L4.79547 13.7953C4.71715 13.8736 4.61092 13.9176 4.50015 13.9176C4.38939 13.9176 4.28316 13.8736 4.20484 13.7953C4.12652 13.717 4.08252 13.6108 4.08252 13.5C4.08252 13.3892 4.12652 13.283 4.20484 13.2047L12.4806 4.92188H6.18765C6.07577 4.92188 5.96846 4.87743 5.88934 4.79831C5.81023 4.71919 5.76578 4.61189 5.76578 4.5C5.76578 4.38811 5.81023 4.28081 5.88934 4.20169C5.96846 4.12257 6.07577 4.07813 6.18765 4.07812H13.5002C13.612 4.07813 13.7193 4.12257 13.7985 4.20169C13.8776 4.28081 13.922 4.38811 13.922 4.5Z"
-                                            fill="currentColor"></path>
-                                    </svg></span>
-                                <br>
-                                <span>View All</span>
-                            </div>
-                        </a>
-                    </div>
+                <div class="caption">
+                    <h2 class="team-title text-uppercase">
+                        <span class="title-word title-our">OUR</span>
+                        <span class="title-word title-team">TEAM</span>
+                    </h2>
                 </div>
             `;
-            teamContainer.innerHTML = html;
+            
+            galleryContainer.innerHTML = html;
         }
     }
 
@@ -603,8 +629,11 @@ function setupContactForm() {
     const form = document.getElementById("contact-form");
     if (!form) return;
 
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        const submitBtn = form.querySelector("button[type='submit']");
+        const btnText = submitBtn ? submitBtn.querySelector(".text") : null;
 
         const name = form.querySelector("[name='name']").value.trim();
         const email = form.querySelector("[name='email']").value.trim();
@@ -616,33 +645,53 @@ function setupContactForm() {
             return;
         }
 
-        // Mock saving message
-        const messages = JSON.parse(localStorage.getItem("portfolio_messages") || "[]");
-        messages.push({
-            id: Date.now(),
-            name,
-            email,
-            subject,
-            message,
-            date: new Date().toLocaleString()
-        });
-        localStorage.setItem("portfolio_messages", JSON.stringify(messages));
+        // Show loading state on submission button
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            if (btnText) btnText.innerHTML = `<i class="fas fa-spinner fa-spin mr-10px"></i> Sending...`;
+        }
 
-        // Show Success UI alert / animation
-        const successAlert = document.createElement("div");
-        successAlert.className = "alert alert-success mt-20px";
-        successAlert.style.padding = "15px";
-        successAlert.style.backgroundColor = "rgba(40, 167, 69, 0.2)";
-        successAlert.style.border = "1px solid #28a745";
-        successAlert.style.color = "#28a745";
-        successAlert.style.borderRadius = "5px";
-        successAlert.innerHTML = `<strong>Success!</strong> Your message has been saved locally.`;
-        
-        form.appendChild(successAlert);
-        form.reset();
+        try {
+            const response = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, subject, message })
+            });
 
-        setTimeout(() => {
-            successAlert.remove();
-        }, 5000);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to submit message.");
+            }
+
+            // Create glassmorphic alert feedback
+            const successAlert = document.createElement("div");
+            successAlert.className = "alert alert-success mt-20px";
+            successAlert.style.padding = "15px";
+            successAlert.style.backgroundColor = "rgba(40, 167, 69, 0.15)";
+            successAlert.style.backdropFilter = "blur(10px)";
+            successAlert.style.border = "1px solid rgba(40, 167, 69, 0.3)";
+            successAlert.style.color = "#28a745";
+            successAlert.style.borderRadius = "5px";
+            successAlert.innerHTML = `<strong>Success!</strong> Your message has been saved.`;
+            
+            form.appendChild(successAlert);
+            form.reset();
+
+            setTimeout(() => {
+                successAlert.style.transition = "opacity 0.4s";
+                successAlert.style.opacity = "0";
+                setTimeout(() => successAlert.remove(), 400);
+            }, 5000);
+
+        } catch (err) {
+            console.error(err);
+            alert(err.message);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                if (btnText) btnText.textContent = "Send Message";
+            }
+        }
     });
 }
