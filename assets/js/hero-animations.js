@@ -24,21 +24,22 @@
         opacity: 0,
         stagger: 0.15,
         duration: 0.9
-      }, 0.15);
-
-    // Animate only once when the page loads
-    gsap.fromTo("#hero-title", {
-      opacity: 0,
-      y: 50,
-      scale: 0.96
-    }, {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: 1.0,
-      ease: "power4.out",
-      delay: 0.3
-    });
+      }, 0.15)
+      // Description fades in after label
+      .to("#hero-desc", {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "power3.out"
+      }, 0.5)
+      // CTA buttons slide in after description
+      .from(".hero-main-content .cta-buttons a", {
+        y: 20,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: "power3.out"
+      }, 0.9);
 
     // 3. Slow parallax scroll for background image
     const heroBg = document.getElementById("hero-bg");

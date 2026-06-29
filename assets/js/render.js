@@ -194,8 +194,7 @@ async function renderHomeStartup() {
             const heroTag3 = document.getElementById("hero-tag3");
             if (heroTag3) heroTag3.textContent = about.hero.tag3;
 
-            const heroTitle = document.getElementById("hero-title");
-            if (heroTitle) heroTitle.textContent = about.hero.title;
+            // hero-title element removed from DOM; title heading no longer displayed in Hero
 
             const heroHeader = document.getElementById("hero-header");
             if (heroHeader && about.hero.bgImage) {

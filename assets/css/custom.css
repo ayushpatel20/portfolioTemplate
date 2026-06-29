@@ -99,7 +99,7 @@
   display: block !important;
   padding: 0 !important;
   margin-top: 40px !important;
-  margin-bottom: 20px !important;
+  margin-bottom: 30px !important;
   opacity: 0; /* animated by GSAP */
 }
 .hero-single-label-row .hero-top-label-item {
@@ -108,36 +108,36 @@
   letter-spacing: 3px !important;
   font-size: 11px !important;
 }
-.hero-title-main {
-  font-family: 'Poppins', 'Inter', 'Unbounded', sans-serif !important;
-  font-size: clamp(6rem, 11vw, 10rem) !important;
-  font-weight: 900 !important;
-  color: #FF6B3D !important; /* solid orange fill */
-  letter-spacing: -0.05em !important;
-  line-height: 0.95 !important;
-  text-transform: uppercase !important;
-  margin-top: 40px !important; /* generous whitespace above */
-  margin-bottom: 50px !important; /* generous whitespace below */
-  text-align: center !important;
-  white-space: nowrap !important; /* One single line on desktop */
-  word-spacing: 0.1em !important;
-  opacity: 0; /* hidden initially for GSAP entry animation */
+/* ─── HERO MAIN CONTENT CONTAINER ─── */
+.hero-main-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 600px;
 }
 
-/* Tablet size overrides */
+/* ─── HERO DESCRIPTION (primary hero content, shown directly below the label) ─── */
+.hero-desc-text {
+  font-family: 'Poppins', sans-serif !important;
+  font-size: clamp(17px, 1.6vw, 20px) !important;
+  font-weight: 400 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  line-height: 1.75 !important;
+  max-width: 580px !important;
+  text-align: left !important;
+  margin-top: 0 !important;
+  margin-bottom: 40px !important;
+  opacity: 0; /* animated by GSAP */
+  will-change: opacity, transform;
+}
+
+/* Responsive desc adjustments */
 @media (max-width: 991px) {
-  .hero-title-main {
-    font-size: clamp(4rem, 9vw, 7rem) !important;
-    white-space: nowrap !important;
-  }
+  .hero-main-content { max-width: 100%; }
+  .hero-desc-text { font-size: 17px !important; }
 }
-
-/* Mobile size overrides */
 @media (max-width: 576px) {
-  .hero-title-main {
-    font-size: clamp(2.8rem, 10vw, 4rem) !important;
-    white-space: normal !important; /* Allow wrapping only on small mobile screen */
-  }
+  .hero-desc-text { font-size: 15px !important; line-height: 1.65 !important; }
 }
 .hero-top-label-item {
   font-family: 'Poppins', sans-serif;
