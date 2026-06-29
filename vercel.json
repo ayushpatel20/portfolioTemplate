@@ -3,54 +3,27 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "index.html",
+          "admin.html",
+          "blog.html",
+          "blog-details.html",
+          "project-details.html",
+          "assets/**",
+          "components/**",
+          "data/**",
+          "images/**",
+          "prisma/**"
+        ]
+      }
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "server.js"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "assets/$1"
-    },
-    {
-      "src": "/images/(.*)",
-      "dest": "images/$1"
-    },
-    {
-      "src": "/data/(.*)",
-      "dest": "data/$1"
-    },
-    {
-      "src": "/components/(.*)",
-      "dest": "components/$1"
-    },
-    {
-      "src": "/admin.html",
-      "dest": "/admin.html"
-    },
-    {
-      "src": "/blog.html",
-      "dest": "/blog.html"
-    },
-    {
-      "src": "/blog-details.html",
-      "dest": "/blog-details.html"
-    },
-    {
-      "src": "/project-details.html",
-      "dest": "/project-details.html"
-    },
-    {
-      "src": "/index.html",
-      "dest": "/index.html"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "server.js"
     }
   ]
 }
-
