@@ -590,23 +590,29 @@ app.delete('/api/admin/media/:filename', checkCsrf, requireRole(['Admin']), (req
   });
 });
 
-// SPA routing fallback: send admin.html for admin paths, index.html for all unrecognized frontend routes
-app.get('/admin/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
-app.get('/admin', (req, res) => {
-  res.redirect('/admin/dashboard');
-});
-
-// Serve frontend static assets
-app.use(express.static(path.join(__dirname, '.')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// On local dev: serve static assets and HTML pages through Express.
+// On Vercel (production): static files are served directly by the CDN — only /api/* hits this function.
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/admin/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+  });
+  app.get('/admin', (req, res) => {
+    res.redirect('/admin/dashboard');
+  });
+  app.use(express.static(path.join(__dirname, '.')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
+}
 
 // Start Server — only when run directly (not as Vercel serverless)
 if (require.main === module) {
+  // In local dev, reinstate static serving on top of API routes
+  app.get('/admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+  app.get('/admin', (req, res) => res.redirect('/admin/dashboard'));
+  app.use(express.static(path.join(__dirname, '.')));
+  app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
   app.listen(PORT, () => {
     console.log(`===============================================`);
     console.log(`  Uifolio Portfolio App running on port ${PORT} `);
