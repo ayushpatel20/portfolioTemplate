@@ -18,7 +18,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-jwt-key';
 let prisma;
 // Only initialize Prisma locally — on Vercel (production) SQLite is unavailable.
 // Auth uses ENV vars; content is served from static JSON files.
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL) {
   try {
     const { PrismaClient } = require('@prisma/client');
     prisma = new PrismaClient();
@@ -532,8 +532,12 @@ app.delete('/api/admin/users/:id', checkCsrf, requireRole(['Admin']), async (req
 
 // 12. Media Library Management
 const uploadsDir = path.join(process.cwd(), 'images', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn("Could not create uploads directory (might be read-only filesystem):", e.message);
 }
 
 app.get('/api/admin/media', authenticateToken, (req, res) => {
