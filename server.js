@@ -17,10 +17,14 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-jwt-key';
 
 let prisma;
-try {
-  prisma = new PrismaClient();
-} catch (err) {
-  console.error("Prisma Client initialization failed. DB connections will be unavailable.", err);
+// Only initialize Prisma locally — on Vercel (production) SQLite is unavailable.
+// Auth uses ENV vars; content is served from static JSON files.
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    prisma = new PrismaClient();
+  } catch (err) {
+    console.error("Prisma Client initialization failed. DB connections will be unavailable.", err);
+  }
 }
 
 // Security Middlewares
