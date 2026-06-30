@@ -7,7 +7,6 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { PrismaClient } = require('@prisma/client');
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +20,7 @@ let prisma;
 // Auth uses ENV vars; content is served from static JSON files.
 if (process.env.NODE_ENV !== 'production') {
   try {
+    const { PrismaClient } = require('@prisma/client');
     prisma = new PrismaClient();
   } catch (err) {
     console.error("Prisma Client initialization failed. DB connections will be unavailable.", err);
