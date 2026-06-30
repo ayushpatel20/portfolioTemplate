@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1782802768307,
+    "email": "admin",
+    "passwordHash": "$2a$10$j4WxRLwBot3sqhQ.LRzd0ept3KhQHQHD1O2PGmnlNO.phg1Ph4Ya.",
+    "name": "Super Admin",
+    "role": "Admin",
+    "status": "Active",
+    "createdAt": "2026-06-30T06:59:28.307Z"
+  }
+]

@@ -27,6 +27,119 @@ if (!process.env.VERCEL) {
   }
 }
 
+// Seeding and Media GC helper functions
+const ensureDefaultAdmin = () => {
+  const usersFile = path.join(process.cwd(), 'data', 'users.json');
+  let users = [];
+  try {
+    if (fs.existsSync(usersFile)) {
+      users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Error reading users.json during ensureDefaultAdmin:', e);
+  }
+
+  const hasAdmin = users.some(u => u.role === 'Admin');
+  if (!hasAdmin) {
+    const defaultAdmin = {
+      id: Date.now(),
+      email: 'admin',
+      passwordHash: '$2a$10$j4WxRLwBot3sqhQ.LRzd0ept3KhQHQHD1O2PGmnlNO.phg1Ph4Ya.', // bcrypt hash for 'admin123'
+      name: 'Super Admin',
+      role: 'Admin',
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    };
+    users.push(defaultAdmin);
+    try {
+      const dataDir = path.dirname(usersFile);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(usersFile, JSON.stringify(users, null, 2), 'utf8');
+      console.log('Default super admin created in data/users.json.');
+    } catch (e) {
+      console.error('Error writing default admin to users.json:', e);
+    }
+  }
+};
+
+const cleanupMediaReferences = (filename) => {
+  const fileUrl = `/images/uploads/${filename}`;
+  const allowedKeys = ['profile', 'about', 'services', 'projects', 'blogs', 'team', 'testimonials', 'seo', 'settings'];
+  
+  allowedKeys.forEach(key => {
+    const filePath = path.join(process.cwd(), 'data', `${key}.json`);
+    if (fs.existsSync(filePath)) {
+      try {
+        let content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        
+        const cleanObj = (obj) => {
+          if (typeof obj === 'string') {
+            if (obj.includes(filename) || obj.includes(fileUrl)) {
+              return "";
+            }
+            return obj;
+          }
+          if (Array.isArray(obj)) {
+            return obj.map(item => cleanObj(item));
+          }
+          if (obj !== null && typeof obj === 'object') {
+            const newObj = {};
+            for (const [k, v] of Object.entries(obj)) {
+              newObj[k] = cleanObj(v);
+            }
+            return newObj;
+          }
+          return obj;
+        };
+
+        const cleanedContent = cleanObj(content);
+        fs.writeFileSync(filePath, JSON.stringify(cleanedContent, null, 2), 'utf8');
+      } catch (err) {
+        console.error(`Error cleaning references in ${key}.json:`, err);
+      }
+    }
+  });
+};
+
+const garbageCollectMedia = () => {
+  const uploadsDir = path.join(process.cwd(), 'images', 'uploads');
+  if (!fs.existsSync(uploadsDir)) return;
+
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) return;
+    
+    const allowedKeys = ['profile', 'about', 'services', 'projects', 'blogs', 'team', 'testimonials', 'seo', 'settings'];
+    let allContentStr = '';
+    
+    allowedKeys.forEach(key => {
+      const filePath = path.join(process.cwd(), 'data', `${key}.json`);
+      if (fs.existsSync(filePath)) {
+        try {
+          allContentStr += fs.readFileSync(filePath, 'utf8');
+        } catch (e) {}
+      }
+    });
+
+    files.forEach(file => {
+      if (file === '.gitkeep') return;
+      
+      if (!allContentStr.includes(file)) {
+        const filePath = path.join(uploadsDir, file);
+        fs.unlink(filePath, (unlinkErr) => {
+          if (!unlinkErr) {
+            console.log(`Garbage collected unused media file: ${file}`);
+          }
+        });
+      }
+    });
+  });
+};
+
+// Initialize default admin on start
+ensureDefaultAdmin();
+
 // Security Middlewares
 app.use(helmet({
   contentSecurityPolicy: {
@@ -138,17 +251,38 @@ app.post('/api/admin/login', apiLimiter, async (req, res) => {
       }
     }
 
+    // Check data/users.json fallback
+    if (!adminUser) {
+      try {
+        const usersFile = path.join(process.cwd(), 'data', 'users.json');
+        if (fs.existsSync(usersFile)) {
+          const users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+          const matchedUser = users.find(u => u.email.trim() === email.trim());
+          if (matchedUser) {
+            adminUser = matchedUser;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to read users JSON for login:', err);
+      }
+    }
+
     // ENV-based fallback — used on Vercel (no persistent SQLite)
     if (!adminUser) {
       const envUser = process.env.ADMIN_EMAIL || 'admin';
       const envPass = process.env.ADMIN_PASSWORD || 'admin123';
       if (email.trim() === envUser && password === envPass) {
-        adminUser = { id: 0, email: envUser, name: 'Super Admin', role: 'Admin', passwordHash: null };
+        adminUser = { id: 0, email: envUser, name: 'Super Admin', role: 'Admin', status: 'Active', passwordHash: null };
       }
     }
 
     if (!adminUser) {
       return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    // Prevent disabled users from logging in
+    if (adminUser.status === 'Disabled') {
+      return res.status(403).json({ error: 'This user account has been disabled.' });
     }
 
     // Only bcrypt-compare if passwordHash exists (DB user); ENV fallback already passed plain check above
@@ -449,19 +583,57 @@ app.post('/api/admin/data/:key', checkCsrf, async (req, res) => {
       console.error(`Error writing data/${key}.json:`, err);
       return res.status(500).json({ error: 'Failed to write config to file.' });
     }
+    // Clean up unused media references from disk
+    try {
+      garbageCollectMedia();
+    } catch (e) {
+      console.error('Error during media garbage collection:', e);
+    }
     return res.status(200).json({ success: true, message: `Updated config ${key} successfully.` });
   });
 });
 
 // 11. User Management (Admin Only)
 app.get('/api/admin/users', authenticateToken, requireRole(['Admin']), async (req, res) => {
-  if (!prisma) return res.status(500).json({ error: 'Database offline.' });
+  ensureDefaultAdmin(); // Ensure default admin exists
+  
+  const usersFile = path.join(process.cwd(), 'data', 'users.json');
+  
+  if (prisma) {
+    try {
+      const dbUsers = await prisma.admin.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+      // Return with status support
+      const mapped = dbUsers.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        status: u.status || 'Active', // Fallback status if missing in DB
+        createdAt: u.createdAt
+      }));
+      return res.status(200).json(mapped);
+    } catch (dbErr) {
+      console.warn('DB users fetch failed, falling back to JSON file:', dbErr.message);
+    }
+  }
+
+  // Fallback to JSON file
   try {
-    const users = await prisma.admin.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, email: true, name: true, role: true, createdAt: true }
-    });
-    return res.status(200).json(users);
+    if (fs.existsSync(usersFile)) {
+      const users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+      const sanitized = users.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        status: u.status || 'Active',
+        createdAt: u.createdAt
+      }));
+      return res.status(200).json(sanitized);
+    }
+    return res.status(200).json([]);
   } catch (err) {
     return res.status(500).json({ error: 'Failed to retrieve accounts.' });
   }
@@ -472,19 +644,58 @@ app.post('/api/admin/users', checkCsrf, requireRole(['Admin']), async (req, res)
   if (!email || !password) {
     return res.status(400).json({ error: 'Username and Password are required.' });
   }
-  try {
-    const existing = await prisma.admin.findUnique({ where: { email: email.trim() } });
-    if (existing) return res.status(400).json({ error: 'User already exists.' });
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await prisma.admin.create({
-      data: {
-        email: email.trim(),
-        passwordHash,
-        name: name ? name.trim() : null,
-        role: role || 'Editor'
-      }
-    });
+  const usersFile = path.join(process.cwd(), 'data', 'users.json');
+  const passwordHash = await bcrypt.hash(password, 10);
+  const cleanEmail = email.trim();
+  
+  // 1. Read existing users from file to check duplicates
+  let jsonUsers = [];
+  try {
+    if (fs.existsSync(usersFile)) {
+      jsonUsers = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+    }
+  } catch (e) {}
+
+  const duplicate = jsonUsers.some(u => u.email.toLowerCase() === cleanEmail.toLowerCase());
+  if (duplicate) {
+    return res.status(400).json({ error: 'User already exists.' });
+  }
+
+  const newUser = {
+    id: Date.now(),
+    email: cleanEmail,
+    passwordHash,
+    name: name ? name.trim() : null,
+    role: role || 'Editor',
+    status: 'Active',
+    createdAt: new Date().toISOString()
+  };
+
+  // 2. Try DB write
+  if (prisma) {
+    try {
+      const existingDb = await prisma.admin.findUnique({ where: { email: cleanEmail } });
+      if (existingDb) return res.status(400).json({ error: 'User already exists.' });
+      
+      const created = await prisma.admin.create({
+        data: {
+          email: cleanEmail,
+          passwordHash,
+          name: newUser.name,
+          role: newUser.role
+        }
+      });
+      newUser.id = created.id;
+    } catch (dbErr) {
+      console.warn('Failed to save user in database, continuing with JSON:', dbErr.message);
+    }
+  }
+
+  // 3. Write to JSON
+  jsonUsers.push(newUser);
+  try {
+    fs.writeFileSync(usersFile, JSON.stringify(jsonUsers, null, 2), 'utf8');
     return res.status(201).json({ success: true, user: { id: newUser.id, email: newUser.email, role: newUser.role } });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to create account.' });
@@ -493,21 +704,53 @@ app.post('/api/admin/users', checkCsrf, requireRole(['Admin']), async (req, res)
 
 app.put('/api/admin/users/:id', checkCsrf, requireRole(['Admin']), async (req, res) => {
   const userId = parseInt(req.params.id);
-  const { name, role, password } = req.body;
+  const { name, role, password, status } = req.body;
   if (isNaN(userId)) return res.status(400).json({ error: 'Invalid User ID.' });
 
+  const usersFile = path.join(process.cwd(), 'data', 'users.json');
+  let jsonUsers = [];
   try {
-    const updateData = {};
-    if (name !== undefined) updateData.name = name;
-    if (role !== undefined) updateData.role = role;
-    if (password) {
-      updateData.passwordHash = await bcrypt.hash(password, 10);
+    if (fs.existsSync(usersFile)) {
+      jsonUsers = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
     }
-    const updated = await prisma.admin.update({
-      where: { id: userId },
-      data: updateData
-    });
-    return res.status(200).json({ success: true, user: { id: updated.id, email: updated.email, role: updated.role } });
+  } catch (e) {}
+
+  const jsonUserIndex = jsonUsers.findIndex(u => u.id === userId);
+  if (jsonUserIndex === -1) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  // Perform updates
+  const user = jsonUsers[jsonUserIndex];
+  if (name !== undefined) user.name = name;
+  if (role !== undefined) user.role = role;
+  if (status !== undefined) user.status = status;
+  if (password) {
+    user.passwordHash = await bcrypt.hash(password, 10);
+  }
+
+  // Update DB if exists
+  if (prisma) {
+    try {
+      const updateData = {};
+      if (name !== undefined) updateData.name = name;
+      if (role !== undefined) updateData.role = role;
+      if (password) {
+        updateData.passwordHash = user.passwordHash;
+      }
+      await prisma.admin.update({
+        where: { email: user.email },
+        data: updateData
+      });
+    } catch (dbErr) {
+      console.warn('Failed to update user in DB, continuing with JSON:', dbErr.message);
+    }
+  }
+
+  // Save JSON
+  try {
+    fs.writeFileSync(usersFile, JSON.stringify(jsonUsers, null, 2), 'utf8');
+    return res.status(200).json({ success: true, user: { id: user.id, email: user.email, role: user.role, status: user.status } });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to update user.' });
   }
@@ -517,13 +760,39 @@ app.delete('/api/admin/users/:id', checkCsrf, requireRole(['Admin']), async (req
   const userId = parseInt(req.params.id);
   if (isNaN(userId)) return res.status(400).json({ error: 'Invalid User ID.' });
 
+  const usersFile = path.join(process.cwd(), 'data', 'users.json');
+  let jsonUsers = [];
+  try {
+    if (fs.existsSync(usersFile)) {
+      jsonUsers = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+    }
+  } catch (e) {}
+
+  const jsonUserIndex = jsonUsers.findIndex(u => u.id === userId);
+  if (jsonUserIndex === -1) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  const user = jsonUsers[jsonUserIndex];
+
   // Prevent admin from deleting themselves
-  if (req.admin.id === userId) {
+  if (req.admin.email === user.email) {
     return res.status(400).json({ error: 'You cannot delete your own account.' });
   }
 
+  // Delete from DB if exists
+  if (prisma) {
+    try {
+      await prisma.admin.delete({ where: { email: user.email } });
+    } catch (dbErr) {
+      console.warn('Failed to delete user in DB, continuing with JSON:', dbErr.message);
+    }
+  }
+
+  // Remove from JSON array
+  jsonUsers.splice(jsonUserIndex, 1);
   try {
-    await prisma.admin.delete({ where: { id: userId } });
+    fs.writeFileSync(usersFile, JSON.stringify(jsonUsers, null, 2), 'utf8');
     return res.status(200).json({ success: true, message: 'Account removed.' });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to delete user.' });
@@ -589,6 +858,11 @@ app.delete('/api/admin/media/:filename', checkCsrf, requireRole(['Admin']), (req
   fs.unlink(filePath, (err) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to delete media.' });
+    }
+    try {
+      cleanupMediaReferences(cleanName);
+    } catch (e) {
+      console.error('Error cleaning media references:', e);
     }
     return res.status(200).json({ success: true, message: 'File deleted.' });
   });

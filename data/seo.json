@@ -1,12 +1,7 @@
 {
-  "title": "Uifolio — Creative Digital Agency & Portfolio",
-  "description": "We are dedicated to transforming businesses through innovative technology solutions that drive growth and efficiency. Premium digital agency specializing in web design, development, and digital marketing.",
-  "keywords": "digital agency, portfolio, web design, web development, digital marketing, UI/UX design, creative agency",
-  "ogTitle": "Uifolio — Creative Digital Agency & Portfolio",
-  "ogDescription": "Premium digital agency specializing in web design, development, and digital marketing.",
-  "ogImage": "images/banner_for_hero_section.png",
-  "twitterCard": "summary_large_image",
-  "canonicalUrl": "",
-  "robotsMeta": "index, follow",
-  "googleAnalyticsId": ""
+  "metaTitle": "Startup Of The Future",
+  "metaDescription": "We are dedicated to transforming businesses through innovative technology solutions that drive growth and efficiency. We empower organizations with tailored digital services.",
+  "ogImage": "images/premium_hero_banner.png",
+  "favicon": "images/logo.png",
+  "analyticsCode": ""
 }

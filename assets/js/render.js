@@ -105,6 +105,71 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 2. Fetch global data
     const profile = await fetchJSON("data/profile.json");
+    
+    // Load SEO configurations
+    try {
+        const seo = await fetchJSON("data/seo.json");
+        const defaultTitle = "Startup Of The Future";
+        const titleText = (seo && seo.metaTitle) ? seo.metaTitle : defaultTitle;
+        document.title = titleText;
+        
+        if (seo) {
+            // Set favicon
+            if (seo.favicon) {
+                let faviconLink = document.querySelector("link[rel*='icon']");
+                if (!faviconLink) {
+                    faviconLink = document.createElement('link');
+                    faviconLink.rel = 'shortcut icon';
+                    document.head.appendChild(faviconLink);
+                }
+                faviconLink.href = seo.favicon;
+            }
+
+            // Helper to set/create meta tag
+            const setMeta = (nameOrProperty, value, isProperty = false) => {
+                if (!value) return;
+                const selector = isProperty ? `meta[property='${nameOrProperty}']` : `meta[name='${nameOrProperty}']`;
+                let meta = document.querySelector(selector);
+                if (!meta) {
+                    meta = document.createElement('meta');
+                    if (isProperty) {
+                        meta.setAttribute('property', nameOrProperty);
+                    } else {
+                        meta.name = nameOrProperty;
+                    }
+                    document.head.appendChild(meta);
+                }
+                meta.content = value;
+            };
+
+            setMeta('description', seo.metaDescription || "");
+            setMeta('og:title', titleText, true);
+            setMeta('og:description', seo.metaDescription || "", true);
+            setMeta('og:image', seo.ogImage || "", true);
+            setMeta('twitter:title', titleText);
+            setMeta('twitter:description', seo.metaDescription || "");
+            setMeta('twitter:image', seo.ogImage || "");
+            setMeta('twitter:card', 'summary_large_image');
+
+            // Inject Google Analytics script if specified
+            if (seo.analyticsCode && seo.analyticsCode.trim()) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = seo.analyticsCode;
+                Array.from(tempDiv.childNodes).forEach(node => {
+                    if (node.tagName === 'SCRIPT') {
+                        const script = document.createElement('script');
+                        if (node.src) script.src = node.src;
+                        script.innerHTML = node.innerHTML;
+                        document.head.appendChild(script);
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load SEO metadata:", e);
+        document.title = "Startup Of The Future";
+    }
+
     if (profile) {
         // Render footer contact
         const footerContact = document.getElementById("footer-contact");
