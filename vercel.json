@@ -1,24 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["data/**", "components/**"]
-      }
-    },
-    { "src": "*.html",        "use": "@vercel/static" },
-    { "src": "assets/**",     "use": "@vercel/static" },
-    { "src": "images/**",     "use": "@vercel/static" },
-    { "src": "data/**",       "use": "@vercel/static" },
-    { "src": "components/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)",        "dest": "/server.js"  },
-    { "src": "/admin/dashboard", "dest": "/admin.html" },
-    { "src": "/admin$",          "dest": "/admin.html" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)",            "dest": "/index.html" }
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "data/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/admin/dashboard", "destination": "/admin.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/((?!api|admin|assets|images|data|components).*)*", "destination": "/index.html" }
   ]
 }

@@ -401,7 +401,7 @@ app.get('/api/admin/data/:key', authenticateToken, async (req, res) => {
   }
 
   // Fallback to JSON file read
-  const filePath = path.join(__dirname, `data/${key}.json`);
+  const filePath = path.join(process.cwd(), 'data', `${key}.json`);
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
       console.error(`Error reading data/${key}.json:`, err);
@@ -443,7 +443,7 @@ app.post('/api/admin/data/:key', checkCsrf, async (req, res) => {
   }
 
   // Write to JSON file on disk
-  const filePath = path.join(__dirname, `data/${key}.json`);
+  const filePath = path.join(process.cwd(), 'data', `${key}.json`);
   fs.writeFile(filePath, valueStr, 'utf8', (err) => {
     if (err) {
       console.error(`Error writing data/${key}.json:`, err);
@@ -531,7 +531,7 @@ app.delete('/api/admin/users/:id', checkCsrf, requireRole(['Admin']), async (req
 });
 
 // 12. Media Library Management
-const uploadsDir = path.join(__dirname, 'images/uploads');
+const uploadsDir = path.join(process.cwd(), 'images', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
