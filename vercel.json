@@ -7,13 +7,18 @@
       "config": {
         "includeFiles": ["data/**", "components/**"]
       }
-    }
+    },
+    { "src": "*.html",        "use": "@vercel/static" },
+    { "src": "assets/**",     "use": "@vercel/static" },
+    { "src": "images/**",     "use": "@vercel/static" },
+    { "src": "data/**",       "use": "@vercel/static" },
+    { "src": "components/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/(.*)",         "dest": "/server.js" },
-    { "src": "/admin/dashboard",  "dest": "/admin.html" },
-    { "src": "/admin$",           "dest": "/admin.html" },
+    { "src": "/api/(.*)",        "dest": "/server.js"  },
+    { "src": "/admin/dashboard", "dest": "/admin.html" },
+    { "src": "/admin$",          "dest": "/admin.html" },
     { "handle": "filesystem" },
-    { "src": "/(.*)",             "dest": "/index.html" }
+    { "src": "/(.*)",            "dest": "/index.html" }
   ]
 }
