@@ -23,3 +23,8 @@ node_modules/
 # Local env config
 .env
 
+# SQLite local database (use ENV vars / cloud DB in production)
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-shm
+prisma/dev.db-wal

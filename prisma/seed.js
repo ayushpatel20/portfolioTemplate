@@ -9,32 +9,47 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL || 'admin@agency.com';
-  const rawPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  console.log('Seeding default admin and editor accounts...');
   
-  console.log('Seeding default admin account...');
-  
-  // Check if admin already exists
+  // Seed Primary Admin (username 'admin', password 'admin123')
   const existingAdmin = await prisma.admin.findUnique({
-    where: { email }
+    where: { email: 'admin' }
   });
   
-  if (existingAdmin) {
-    console.log(`Admin account with email ${email} already exists.`);
-    return;
+  if (!existingAdmin) {
+    const adminHash = await bcrypt.hash('admin123', 10);
+    const newAdmin = await prisma.admin.create({
+      data: {
+        email: 'admin',
+        passwordHash: adminHash,
+        name: 'Super Admin',
+        role: 'Admin'
+      }
+    });
+    console.log(`Seeded account: ${newAdmin.email} (Role: ${newAdmin.role})`);
+  } else {
+    console.log('Admin account already exists.');
   }
-  
-  const passwordHash = await bcrypt.hash(rawPassword, 10);
-  
-  const newAdmin = await prisma.admin.create({
-    data: {
-      email,
-      passwordHash,
-      name: 'Agency Admin'
-    }
+
+  // Seed Editor (username 'editor', password 'editor123')
+  const existingEditor = await prisma.admin.findUnique({
+    where: { email: 'editor' }
   });
-  
-  console.log(`Default admin account seeded successfully: ${newAdmin.email}`);
+
+  if (!existingEditor) {
+    const editorHash = await bcrypt.hash('editor123', 10);
+    const newEditor = await prisma.admin.create({
+      data: {
+        email: 'editor',
+        passwordHash: editorHash,
+        name: 'Content Editor',
+        role: 'Editor'
+      }
+    });
+    console.log(`Seeded account: ${newEditor.email} (Role: ${newEditor.role})`);
+  } else {
+    console.log('Editor account already exists.');
+  }
 }
 
 main()

@@ -1,0 +1,13 @@
+{
+  "siteName": "Uifolio",
+  "tagline": "Creative Digital Agency",
+  "logo": "images/logo.png",
+  "favicon": "images/favicon.ico",
+  "primaryColor": "#ff5e14",
+  "accentColor": "#FF6B3D",
+  "footerText": "Crafting digital experiences that inspire.",
+  "contactEmail": "hello@uifolio.agency",
+  "maintenanceMode": false,
+  "cookieConsent": false,
+  "allowRegistration": false
+}

@@ -1,10 +1,11 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 model Admin {
@@ -12,6 +13,7 @@ model Admin {
   email        String   @unique
   passwordHash String
   name         String?
+  role         String   @default("Admin")
   createdAt    DateTime @default(now())
 }
 
@@ -30,4 +32,9 @@ model NewsletterSubscriber {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+model Config {
+  key   String @id
+  value String
 }
